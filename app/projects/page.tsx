@@ -103,9 +103,9 @@ export default function ProjectsPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Filter loaded projects…"
+              placeholder={t("projects.list.filterPlaceholder")}
               className="w-56 pl-9"
-              aria-label="Filter projects"
+              aria-label={t("projects.list.filterAria")}
             />
           </div>
 
@@ -120,14 +120,14 @@ export default function ProjectsPage() {
                 setPage(1);
               }}
               className="w-40"
-              aria-label="Modified since"
-              title="Only projects modified after this date"
+              aria-label={t("projects.list.modifiedSince")}
+              title={t("projects.list.modifiedTitle")}
             />
             {modified && (
               <Button
                 variant="ghost"
                 size="sm"
-                aria-label="Clear modified filter"
+                aria-label={t("projects.list.clearModified")}
                 onClick={() => {
                   setModified("");
                   setPage(1);
@@ -147,7 +147,8 @@ export default function ProjectsPage() {
               setPage(1);
             }}
           >
-            <Layers className="size-4" /> {showAll ? "Showing all" : "Show all"}
+            <Layers className="size-4" />{" "}
+            {showAll ? t("projects.list.showingAll") : t("projects.list.showAll")}
           </Button>
 
           <div className="ml-auto flex items-center gap-2">
@@ -155,12 +156,12 @@ export default function ProjectsPage() {
               variant="ghost"
               size="sm"
               onClick={() => refetch()}
-              aria-label="Refresh projects"
+              aria-label={t("projects.list.refreshAria")}
             >
               <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
             </Button>
             <Button size="sm" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> New project
+              <Plus className="size-4" /> {t("projects.list.new")}
             </Button>
           </div>
         </div>
@@ -179,18 +180,18 @@ export default function ProjectsPage() {
               `/project/${encodeURIComponent(String(p.Number))}`,
             )
           }
-          emptyTitle="No projects found"
+          emptyTitle={t("projects.list.emptyTitle")}
           emptyBody={
             search
-              ? "No loaded project matches the filter — clear it or load more pages."
+              ? t("projects.list.emptySearch")
               : modified
-                ? "No projects were modified after the chosen date."
-                : "This company has no projects yet — create the first one."
+                ? t("projects.list.emptyModified")
+                : t("projects.list.emptyNone")
           }
           emptyAction={
             !search ? (
               <Button size="sm" onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> New project
+                <Plus className="size-4" /> {t("projects.list.new")}
               </Button>
             ) : undefined
           }
@@ -199,7 +200,7 @@ export default function ProjectsPage() {
               <Pagination page={page} onPage={setPage} hasMore={hasMore} loading={isFetching} />
             ) : (
               <div className="border-t border-line px-4 py-3 text-[13px] text-fog tnum">
-                {data?.length ?? 0} projects loaded
+                {t("projects.list.loadedCount", { n: data?.length ?? 0 })}
               </div>
             )
           }

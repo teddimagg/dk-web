@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { useT } from "@/lib/i18n";
 
 /**
  * Reporting period for the stats pages (Overview + Analytics). Defaults to the
@@ -87,4 +88,19 @@ export function periodLabel(p: Period): string {
     return "custom";
   }
   return "All history";
+}
+
+/** Locale-aware period label (hook form — use in components instead of periodLabel). */
+export function usePeriodLabel(): (p: Period) => string {
+  const t = useT();
+  return (p) => {
+    if (p.mode === "year") return String(p.year);
+    if (p.mode === "custom") {
+      if (p.from && p.to) return `${p.from} → ${p.to}`;
+      if (p.from) return t("period.fromDate", { date: p.from });
+      if (p.to) return t("period.untilDate", { date: p.to });
+      return t("period.custom");
+    }
+    return t("period.allHistory");
+  };
 }

@@ -13,17 +13,21 @@ import { JsonView } from "@/components/ui/JsonView";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation, useDkQuery } from "@/lib/hooks/useDk";
 import { formatAmount, formatDate } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { MemberApplication, MemberFund } from "@/lib/api/types/members";
 import { APPLICATION_STATUSES, applicationId, applicationStatusInfo } from "./applicationStatus";
 import { AttachmentsDialog } from "./AttachmentsDialog";
 
 function StatusBadge({ app }: { app: MemberApplication }) {
+  const t = useT();
   const info = applicationStatusInfo(app.Status ?? app.StatusText);
-  return info ? <Badge tone={info.tone}>{info.label}</Badge> : <span className="text-mist">–</span>;
+  if (!info) return <span className="text-mist">–</span>;
+  return <Badge tone={info.tone}>{info.labelKey ? t(info.labelKey) : info.label}</Badge>;
 }
 
 /** Applications tab — GET /member/:number/application plus all per-application actions. */
 export function ApplicationsTab({ number }: { number: string }) {
+  const t = useT();
   const enc = encodeURIComponent(number);
   const { data, isLoading, isFetching, error, refetch } = useDkQuery<MemberApplication[]>(
     ["member", number, "applications"],
@@ -36,28 +40,28 @@ export function ApplicationsTab({ number }: { number: string }) {
   const columns: Column<MemberApplication>[] = [
     {
       key: "id",
-      header: "ID",
+      header: t("members.field.id"),
       width: "70px",
       render: (a) => <span className="font-medium text-ink tnum">{applicationId(a) ?? "–"}</span>,
     },
-    { key: "fund", header: "Fund", render: (a) => a.Fund ?? a.FundName ?? "–" },
-    { key: "grant", header: "Grant", render: (a) => a.Grant ?? a.GrantName ?? "–" },
+    { key: "fund", header: t("members.field.fund"), render: (a) => a.Fund ?? a.FundName ?? "–" },
+    { key: "grant", header: t("members.field.grant"), render: (a) => a.Grant ?? a.GrantName ?? "–" },
     {
       key: "description",
-      header: "Description",
+      header: t("members.field.description"),
       render: (a) => <span className="block max-w-72 truncate">{a.Description || "–"}</span>,
     },
     {
       key: "amount",
-      header: "Amount",
+      header: t("members.field.amount"),
       align: "right",
       render: (a) =>
         typeof a.Amount === "number" ? <span className="tnum">{formatAmount(a.Amount)}</span> : "–",
     },
-    { key: "status", header: "Status", render: (a) => <StatusBadge app={a} /> },
+    { key: "status", header: t("members.field.status"), render: (a) => <StatusBadge app={a} /> },
     {
       key: "date",
-      header: "Date",
+      header: t("members.field.date"),
       render: (a) => <span className="tnum">{formatDate(a.Created ?? a.Date ?? a.Modified)}</span>,
     },
     {
@@ -69,7 +73,7 @@ export function ApplicationsTab({ number }: { number: string }) {
         return (
           <div className="flex justify-end gap-1">
             <Button variant="ghost" size="sm" disabled={id == null} onClick={() => setStatusFor(a)}>
-              <Pencil className="size-4" /> Status
+              <Pencil className="size-4" /> {t("members.field.status")}
             </Button>
             <Button
               variant="ghost"
@@ -77,7 +81,7 @@ export function ApplicationsTab({ number }: { number: string }) {
               disabled={id == null}
               onClick={() => setAttachmentsFor(a)}
             >
-              <FileText className="size-4" /> Attachments
+              <FileText className="size-4" /> {t("members.attach.label")}
             </Button>
           </div>
         );
@@ -88,18 +92,18 @@ export function ApplicationsTab({ number }: { number: string }) {
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3 px-5 py-4">
-        <CardTitle icon={<ClipboardList />}>Applications</CardTitle>
+        <CardTitle icon={<ClipboardList />}>{t("members.tabs.applications")}</CardTitle>
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => refetch()}
-            aria-label="Refresh applications"
+            aria-label={t("members.tab.refreshAria", { section: t("members.tabs.applications") })}
           >
             <RefreshCw className={clsx("size-4", isFetching && "animate-spin")} />
           </Button>
           <Button variant="secondary" size="sm" onClick={() => setSubmitting(true)}>
-            <Plus className="size-4" /> Submit application
+            <Plus className="size-4" /> {t("members.apps.submit")}
           </Button>
         </div>
       </div>
@@ -111,18 +115,18 @@ export function ApplicationsTab({ number }: { number: string }) {
         loading={isLoading}
         error={error ?? null}
         onRetry={() => refetch()}
-        emptyTitle="No applications"
-        emptyBody="This member has not submitted any fund applications yet."
+        emptyTitle={t("members.apps.emptyTitle")}
+        emptyBody={t("members.apps.emptyBody")}
         emptyAction={
           <Button size="sm" variant="secondary" onClick={() => setSubmitting(true)}>
-            <Plus className="size-4" /> Submit application
+            <Plus className="size-4" /> {t("members.apps.submit")}
           </Button>
         }
       />
 
       {data && data.length > 0 && (
         <div className="px-5 pb-5 pt-2">
-          <JsonView data={data} label="Raw applications payload" />
+          <JsonView data={data} />
         </div>
       )}
 
@@ -160,6 +164,7 @@ function SubmitApplicationDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useT();
   const toast = useToast();
   const enc = encodeURIComponent(number);
   const [form, setForm] = useState({
@@ -187,7 +192,7 @@ function SubmitApplicationDialog({
 
   function send() {
     if (!form.fund.trim()) {
-      setFundError("Fund is required");
+      setFundError(t("members.apps.fundRequired"));
       return;
     }
     setFundError(undefined);
@@ -205,11 +210,14 @@ function SubmitApplicationDialog({
       { path: `/member/${enc}/application`, method: "POST", body },
       {
         onSuccess: () => {
-          toast.success("Application submitted", `Fund ${form.fund.trim()} · member ${number}`);
+          toast.success(
+            t("members.apps.submitted"),
+            t("members.apps.submittedDetail", { fund: form.fund.trim(), number }),
+          );
           setForm({ fund: "", grant: "", description: "", bankCode: "", bankGroup: "", bankAccount: "" });
           onClose();
         },
-        onError: (e) => toast.error("Could not submit application", e.message),
+        onError: (e) => toast.error(t("members.apps.submitFailed"), e.message),
       },
     );
   }
@@ -218,8 +226,8 @@ function SubmitApplicationDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Submit application"
-      subtitle={`New fund application for member ${number}.`}
+      title={t("members.apps.submit")}
+      subtitle={t("members.apps.submitSubtitle", { number })}
     >
       <form
         onSubmit={(e) => {
@@ -229,12 +237,12 @@ function SubmitApplicationDialog({
         className="space-y-4"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Fund" required error={fundError}>
+          <Field label={t("members.field.fund")} required error={fundError}>
             <Input
               list="application-fund-suggestions"
               value={form.fund}
               onChange={set("fund")}
-              placeholder="e.g. 02"
+              placeholder={t("members.fundPlaceholder")}
               autoFocus
             />
           </Field>
@@ -243,33 +251,33 @@ function SubmitApplicationDialog({
               <option key={f} value={f} />
             ))}
           </datalist>
-          <Field label="Grant" hint="optional">
+          <Field label={t("members.field.grant")} hint={t("members.optional")}>
             <Input value={form.grant} onChange={set("grant")} />
           </Field>
         </div>
-        <Field label="Description" hint="optional">
+        <Field label={t("members.field.description")} hint={t("members.optional")}>
           <Textarea value={form.description} onChange={set("description")} />
         </Field>
         <div className="space-y-3">
-          <p className="text-[13px] font-medium text-fog">Bank account (optional)</p>
+          <p className="text-[13px] font-medium text-fog">{t("members.apps.bankSection")}</p>
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Bank">
+            <Field label={t("members.field.bank")}>
               <Input value={form.bankCode} onChange={set("bankCode")} placeholder="111" />
             </Field>
-            <Field label="Ledger">
+            <Field label={t("members.field.ledger")}>
               <Input value={form.bankGroup} onChange={set("bankGroup")} placeholder="26" />
             </Field>
-            <Field label="Account">
+            <Field label={t("members.field.account")}>
               <Input value={form.bankAccount} onChange={set("bankAccount")} placeholder="790" />
             </Field>
           </div>
         </div>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={submit.isPending}>
-            <Send className="size-4" /> Submit application
+            <Send className="size-4" /> {t("members.apps.submit")}
           </Button>
         </div>
       </form>
@@ -287,6 +295,7 @@ function UpdateStatusDialog({
   application: MemberApplication;
   onClose: () => void;
 }) {
+  const t = useT();
   const toast = useToast();
   const enc = encodeURIComponent(number);
   const appId = applicationId(application);
@@ -304,11 +313,12 @@ function UpdateStatusDialog({
 
   function save() {
     if (!fund.trim()) {
-      setFundError("Fund is required by the status route");
+      setFundError(t("members.appStatus.fundRequired"));
       return;
     }
     setFundError(undefined);
-    const label = APPLICATION_STATUSES.find((s) => s.value === status)?.label ?? status;
+    const labelKey = APPLICATION_STATUSES.find((s) => s.value === status)?.labelKey;
+    const label = labelKey ? t(labelKey) : status;
     update.mutate(
       {
         path: `/member/${enc}/application/${appId}?fund=${encodeURIComponent(fund.trim())}&status=${encodeURIComponent(status)}`,
@@ -316,10 +326,10 @@ function UpdateStatusDialog({
       },
       {
         onSuccess: () => {
-          toast.success("Application status updated", `#${appId} → ${label}`);
+          toast.success(t("members.appStatus.updated"), `#${appId} → ${label}`);
           onClose();
         },
-        onError: (e) => toast.error("Could not update status", e.message),
+        onError: (e) => toast.error(t("members.appStatus.updateFailed"), e.message),
       },
     );
   }
@@ -328,8 +338,8 @@ function UpdateStatusDialog({
     <Dialog
       open
       onClose={onClose}
-      title={`Update status — application #${appId ?? "?"}`}
-      subtitle="Sets the workflow status of this fund application."
+      title={t("members.appStatus.title", { id: appId ?? "?" })}
+      subtitle={t("members.appStatus.subtitle")}
     >
       <form
         onSubmit={(e) => {
@@ -338,24 +348,28 @@ function UpdateStatusDialog({
         }}
         className="space-y-4"
       >
-        <Field label="Fund" required error={fundError} hint="fund the application belongs to">
-          <Input value={fund} onChange={(e) => setFund(e.target.value)} placeholder="e.g. 02" />
+        <Field label={t("members.field.fund")} required error={fundError} hint={t("members.appStatus.fundHint")}>
+          <Input
+            value={fund}
+            onChange={(e) => setFund(e.target.value)}
+            placeholder={t("members.fundPlaceholder")}
+          />
         </Field>
-        <Field label="Status" required>
+        <Field label={t("members.field.status")} required>
           <Select value={status} onChange={(e) => setStatus(e.target.value)}>
             {APPLICATION_STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
-                {s.label}
+                {t(s.labelKey)}
               </option>
             ))}
           </Select>
         </Field>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={update.isPending}>
-            Update status
+            {t("members.appStatus.update")}
           </Button>
         </div>
       </form>

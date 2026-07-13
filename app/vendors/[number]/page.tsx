@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatDate } from "@/lib/format";
 import type { Vendor, VendorTransaction } from "@/lib/api/types/vendors";
 import { transactionText } from "../_components/helpers";
@@ -27,6 +28,7 @@ const TX_PAGE_SIZE = 25;
 export default function VendorDetailPage() {
   const params = useParams<{ number: string }>();
   const number = decodeURIComponent(params.number);
+  const t = useT();
   const [editing, setEditing] = useState(false);
   const [tab, setTab] = useState("transactions");
   const [txPage, setTxPage] = useState(1);
@@ -42,22 +44,22 @@ export default function VendorDetailPage() {
   const txHasMore = (txQuery.data?.length ?? 0) === TX_PAGE_SIZE;
 
   const txColumns: Column<VendorTransaction>[] = [
-    { key: "date", header: "Date", width: "110px", render: (t) => formatDate(t.Date ?? t.Created) },
-    { key: "voucher", header: "Voucher", render: (t) => <span className="font-mono text-xs">{t.Voucher ?? "–"}</span> },
-    { key: "reference", header: "Reference", render: (t) => t.Reference ?? "–" },
-    { key: "text", header: "Text", render: (t) => <span className="text-fog">{transactionText(t)}</span> },
-    { key: "due", header: "Due date", width: "110px", render: (t) => formatDate(t.DueDate) },
+    { key: "date", header: t("vendors.col.date"), width: "110px", render: (tx) => formatDate(tx.Date ?? tx.Created) },
+    { key: "voucher", header: t("vendors.col.voucher"), render: (tx) => <span className="font-mono text-xs">{tx.Voucher ?? "–"}</span> },
+    { key: "reference", header: t("vendors.col.reference"), render: (tx) => tx.Reference ?? "–" },
+    { key: "text", header: t("vendors.col.text"), render: (tx) => <span className="text-fog">{transactionText(tx)}</span> },
+    { key: "due", header: t("vendors.col.due"), width: "110px", render: (tx) => formatDate(tx.DueDate) },
     {
       key: "amount",
-      header: "Amount",
+      header: t("vendors.col.amount"),
       align: "right",
-      render: (t) => <span className="tnum font-medium">{formatAmount(t.Amount, t.Currency || "ISK")}</span>,
+      render: (tx) => <span className="tnum font-medium">{formatAmount(tx.Amount, tx.Currency || "ISK")}</span>,
     },
     {
       key: "balance",
-      header: "Balance",
+      header: t("vendors.col.balance"),
       align: "right",
-      render: (t) => <span className="tnum text-fog">{formatAmount(t.Balance ?? t.Remaining, t.Currency || "ISK")}</span>,
+      render: (tx) => <span className="tnum text-fog">{formatAmount(tx.Balance ?? tx.Remaining, tx.Currency || "ISK")}</span>,
     },
   ];
 
@@ -76,7 +78,7 @@ export default function VendorDetailPage() {
           <Link
             href="/vendors"
             className="grid size-9 place-items-center rounded-full border border-line bg-white text-fog transition-colors hover:text-ink"
-            aria-label="Back to vendors"
+            aria-label={t("vendors.detail.back")}
           >
             <ArrowLeft className="size-4" />
           </Link>
@@ -84,43 +86,43 @@ export default function VendorDetailPage() {
             {vendor ? (
               <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-ink">
                 {vendor.Name ?? number}
-                {vendor.Blocked && <Badge tone="red">Blocked</Badge>}
-                {vendor.Inactive && <Badge tone="amber">Inactive</Badge>}
+                {vendor.Blocked && <Badge tone="red">{t("vendors.badge.blocked")}</Badge>}
+                {vendor.Inactive && <Badge tone="amber">{t("vendors.badge.inactive")}</Badge>}
               </h2>
             ) : (
               <Skeleton className="h-6 w-56" />
             )}
-            <p className="text-[13px] text-fog tnum">Vendor Nº {number}</p>
+            <p className="text-[13px] text-fog tnum">{t("vendors.detail.vendorNo", { number })}</p>
           </div>
         </div>
         <Button variant="secondary" onClick={() => setEditing(true)} disabled={!vendor}>
-          <Pencil className="size-4" /> Edit vendor
+          <Pencil className="size-4" /> {t("vendors.detail.edit")}
         </Button>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="p-6">
           <CardTitle icon={<IdCard />} className="mb-5">
-            Identity & terms
+            {t("vendors.detail.identity")}
           </CardTitle>
           {vendor ? (
             <KV
               columns={1}
               items={[
-                { label: "Number", value: vendor.Number },
-                { label: "SSN", value: vendor.SSNumber },
-                { label: "Alias", value: vendor.Alias },
-                { label: "Ledger code", value: vendor.LedgerCode },
-                { label: "Payment mode", value: vendor.PaymentMode },
-                { label: "Payment term", value: vendor.PaymentTerm },
-                { label: "Currency", value: vendor.CurrencyCode },
-                { label: "Bank account", value: vendor.BankAccount },
+                { label: t("vendors.col.number"), value: vendor.Number },
+                { label: t("vendors.col.ssn"), value: vendor.SSNumber },
+                { label: t("vendors.field.alias"), value: vendor.Alias },
+                { label: t("vendors.field.ledgerCode"), value: vendor.LedgerCode },
+                { label: t("vendors.field.paymentMode"), value: vendor.PaymentMode },
+                { label: t("vendors.field.paymentTerm"), value: vendor.PaymentTerm },
+                { label: t("vendors.field.currency"), value: vendor.CurrencyCode },
+                { label: t("vendors.field.bankAccount"), value: vendor.BankAccount },
                 {
-                  label: "Balance",
+                  label: t("vendors.field.balance"),
                   value: vendor.Balance != null ? formatAmount(vendor.Balance, vendor.CurrencyCode || "ISK") : null,
                 },
-                { label: "Created", value: formatDate(vendor.Created) === "–" ? null : formatDate(vendor.Created) },
-                { label: "Modified", value: formatDate(vendor.Modified) === "–" ? null : formatDate(vendor.Modified) },
+                { label: t("vendors.field.created"), value: formatDate(vendor.Created) === "–" ? null : formatDate(vendor.Created) },
+                { label: t("vendors.field.modified"), value: formatDate(vendor.Modified) === "–" ? null : formatDate(vendor.Modified) },
               ]}
             />
           ) : (
@@ -129,21 +131,21 @@ export default function VendorDetailPage() {
         </Card>
         <Card className="p-6">
           <CardTitle icon={<Truck />} className="mb-5">
-            Contact
+            {t("vendors.detail.contact")}
           </CardTitle>
           {vendor ? (
             <KV
               columns={1}
               items={[
-                { label: "Address", value: vendor.Address1 },
-                { label: "Address 2", value: vendor.Address2 },
-                { label: "Zip / City", value: [vendor.ZipCode, vendor.City].filter(Boolean).join(" ") },
-                { label: "Country", value: vendor.Country },
-                { label: "Phone", value: vendor.Phone },
-                { label: "Fax", value: vendor.Fax },
-                { label: "Email", value: vendor.Email },
-                { label: "Contact", value: vendor.ContactName },
-                { label: "Comment", value: vendor.Comment },
+                { label: t("vendors.field.address"), value: vendor.Address1 },
+                { label: t("vendors.field.address2"), value: vendor.Address2 },
+                { label: t("vendors.field.zipCity"), value: [vendor.ZipCode, vendor.City].filter(Boolean).join(" ") },
+                { label: t("vendors.field.country"), value: vendor.Country },
+                { label: t("vendors.col.phone"), value: vendor.Phone },
+                { label: t("vendors.field.fax"), value: vendor.Fax },
+                { label: t("vendors.col.email"), value: vendor.Email },
+                { label: t("vendors.field.contact"), value: vendor.ContactName },
+                { label: t("vendors.field.comment"), value: vendor.Comment },
               ]}
             />
           ) : (
@@ -154,8 +156,8 @@ export default function VendorDetailPage() {
 
       <Tabs
         tabs={[
-          { id: "transactions", label: "Transactions" },
-          { id: "new-invoice", label: "New vendor invoice" },
+          { id: "transactions", label: t("vendors.tabs.transactions") },
+          { id: "new-invoice", label: t("vendors.detail.newInvoiceTab") },
         ]}
         active={tab}
         onChange={setTab}
@@ -164,17 +166,17 @@ export default function VendorDetailPage() {
       {tab === "transactions" && (
         <Card className="overflow-hidden">
           <div className="flex items-center gap-2.5 border-b border-line px-5 py-4">
-            <CardTitle icon={<ReceiptText />}>Vendor transactions</CardTitle>
+            <CardTitle icon={<ReceiptText />}>{t("vendors.detail.transactions")}</CardTitle>
           </div>
           <DataTable
             columns={txColumns}
             rows={txQuery.data}
-            rowKey={(t, i) => t.ID ?? t.RecordID ?? `${t.Voucher ?? ""}-${i}`}
+            rowKey={(tx, i) => tx.ID ?? tx.RecordID ?? `${tx.Voucher ?? ""}-${i}`}
             loading={txQuery.isLoading || (txQuery.isFetching && !txQuery.data)}
             error={txQuery.error}
             onRetry={txQuery.refetch}
-            emptyTitle="No transactions"
-            emptyBody={`No ledger transactions found for vendor ${number}.`}
+            emptyTitle={t("vendors.tx.emptyTitle")}
+            emptyBody={t("vendors.detail.txEmptyBody", { number })}
             footer={<Pagination page={txPage} onPage={setTxPage} hasMore={txHasMore} loading={txQuery.isFetching} />}
           />
         </Card>
@@ -183,7 +185,7 @@ export default function VendorDetailPage() {
       {tab === "new-invoice" && (
         <Card className="p-6">
           <CardTitle icon={<FileText />} className="mb-5">
-            New vendor invoice for {vendor?.Name ?? number}
+            {t("vendors.detail.newInvoiceFor", { name: vendor?.Name ?? number })}
           </CardTitle>
           <NewVendorInvoiceForm vendorNumber={number} vendorName={vendor?.Name} />
         </Card>

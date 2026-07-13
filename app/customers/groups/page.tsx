@@ -7,16 +7,19 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import {
   customerGroupLabel,
   type Customer,
   type CustomerGroup,
 } from "@/lib/api/types/customers";
-import { customerColumns, useCustomerRowNav } from "../_components/customerColumns";
+import { useCustomerColumns, useCustomerRowNav } from "../_components/customerColumns";
 
 export default function CustomerGroupsPage() {
   const [selected, setSelected] = useState<CustomerGroup | null>(null);
+  const t = useT();
   const nav = useCustomerRowNav();
+  const columns = useCustomerColumns();
 
   const groups = useDkQuery<CustomerGroup[]>(["customergroups"], "/customergroup");
   const members = useDkQuery<Customer[]>(
@@ -29,19 +32,19 @@ export default function CustomerGroupsPage() {
     <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
       <Card className="h-fit p-5">
         <CardTitle icon={<Layers />} className="mb-4">
-          Customer groups
+          {t("customers.groups.title")}
         </CardTitle>
         <DataTable<CustomerGroup>
           columns={[
             {
               key: "number",
-              header: "Group",
+              header: t("customers.col.group"),
               width: "90px",
               render: (g) => <Badge tone={selected?.Number === g.Number ? "ink" : "neutral"}>{g.Number}</Badge>,
             },
             {
               key: "label",
-              header: "Description",
+              header: t("customers.col.description"),
               render: (g) => (
                 <span className={selected?.Number === g.Number ? "font-semibold text-ink" : "text-ink"}>
                   {customerGroupLabel(g) || <span className="text-mist">–</span>}
@@ -62,20 +65,22 @@ export default function CustomerGroupsPage() {
           loading={groups.isLoading}
           error={groups.error}
           onRetry={() => groups.refetch()}
-          emptyTitle="No customer groups"
-          emptyBody="This company has no customer groups defined in dkPlus."
+          emptyTitle={t("customers.groups.emptyTitle")}
+          emptyBody={t("customers.groups.emptyBody")}
         />
       </Card>
 
       <Card className="p-5">
         <CardTitle icon={<Users />} className="mb-4">
           {selected
-            ? `Customers in ${selected.Number}${customerGroupLabel(selected) ? ` — ${customerGroupLabel(selected)}` : ""}`
-            : "Customers in group"}
+            ? t("customers.groups.membersIn", {
+                group: `${selected.Number}${customerGroupLabel(selected) ? ` — ${customerGroupLabel(selected)}` : ""}`,
+              })
+            : t("customers.groups.membersTitle")}
         </CardTitle>
         {selected ? (
           <DataTable<Customer>
-            columns={customerColumns}
+            columns={columns}
             rows={members.data}
             rowKey={(c) => c.Number}
             onRowClick={nav.onRowClick}
@@ -83,14 +88,14 @@ export default function CustomerGroupsPage() {
             loading={members.isLoading || members.isFetching}
             error={members.error}
             onRetry={() => members.refetch()}
-            emptyTitle="No customers in this group"
-            emptyBody="No customer is currently assigned to this group."
+            emptyTitle={t("customers.list.emptyGroupTitle")}
+            emptyBody={t("customers.groups.emptyMembersBody")}
           />
         ) : (
           <EmptyState
             icon={<Layers />}
-            title="Select a group"
-            body="Pick a customer group on the left to list every customer assigned to it."
+            title={t("customers.groups.selectTitle")}
+            body={t("customers.groups.selectBody")}
           />
         )}
       </Card>

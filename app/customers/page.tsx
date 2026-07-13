@@ -12,12 +12,13 @@ import { useToast } from "@/components/ui/Toast";
 import { dkFetchBlob, downloadBlob } from "@/lib/api/client";
 import { useDkQuery } from "@/lib/hooks/useDk";
 import { useActiveCompany } from "@/lib/stores/companies";
+import { useT } from "@/lib/i18n";
 import {
   customerGroupLabel,
   type Customer,
   type CustomerGroup,
 } from "@/lib/api/types/customers";
-import { customerColumns, useCustomerRowNav } from "./_components/customerColumns";
+import { useCustomerColumns, useCustomerRowNav } from "./_components/customerColumns";
 import { CustomerDialog } from "./_components/CustomerDialog";
 import { PhoneLookupDialog } from "./_components/PhoneLookupDialog";
 
@@ -34,7 +35,9 @@ export default function CustomersPage() {
 
   const company = useActiveCompany();
   const toast = useToast();
+  const t = useT();
   const nav = useCustomerRowNav();
+  const columns = useCustomerColumns();
 
   // Debounce the search box; the search endpoint kicks in from 2 characters.
   useEffect(() => {
@@ -73,9 +76,9 @@ export default function CustomersPage() {
     try {
       const blob = await dkFetchBlob("/customer/false", { token: company.token });
       downloadBlob(blob, "customers.json");
-      toast.success("Export ready", "customers.json is downloading.");
+      toast.success(t("customers.list.exportReady"), t("customers.list.exportReadyDetail"));
     } catch (e) {
-      toast.error("Export failed", e instanceof Error ? e.message : undefined);
+      toast.error(t("customers.list.exportFailed"), e instanceof Error ? e.message : undefined);
     } finally {
       setExporting(false);
     }
@@ -85,7 +88,7 @@ export default function CustomersPage() {
     <div className="space-y-6">
       <Card className="p-5">
         <div className="mb-4 flex flex-wrap items-end gap-3">
-          <Field label="Search" className="w-64" hint="min. 2 characters">
+          <Field label={t("customers.list.searchLabel")} className="w-64" hint={t("customers.list.searchHint")}>
             <div className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist" />
               <Input
@@ -94,12 +97,12 @@ export default function CustomersPage() {
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                placeholder="Name, number, SSN…"
+                placeholder={t("customers.list.searchPlaceholder")}
                 className="pl-9"
               />
             </div>
           </Field>
-          <Field label="Group" className="w-48">
+          <Field label={t("customers.list.groupLabel")} className="w-48">
             <Select
               value={group}
               onChange={(e) => {
@@ -107,7 +110,7 @@ export default function CustomersPage() {
                 setPage(1);
               }}
             >
-              <option value="">All groups</option>
+              <option value="">{t("customers.list.allGroups")}</option>
               {(groups.data ?? []).map((g) => (
                 <option key={g.Number} value={g.Number}>
                   {customerGroupLabel(g) ? `${g.Number} — ${customerGroupLabel(g)}` : g.Number}
@@ -117,19 +120,19 @@ export default function CustomersPage() {
           </Field>
           <div className="ml-auto flex flex-wrap items-center gap-2">
             <Button variant="secondary" onClick={() => setPhoneOpen(true)}>
-              <Hash className="size-4" /> Phone lookup
+              <Hash className="size-4" /> {t("customers.phone.title")}
             </Button>
             <Button variant="secondary" onClick={exportJson} loading={exporting}>
-              <Download className="size-4" /> Export JSON
+              <Download className="size-4" /> {t("customers.list.exportJson")}
             </Button>
             <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> New customer
+              <Plus className="size-4" /> {t("customers.list.newCustomer")}
             </Button>
           </div>
         </div>
 
         <DataTable<Customer>
-          columns={customerColumns}
+          columns={columns}
           rows={active.data}
           rowKey={(c) => c.Number}
           onRowClick={nav.onRowClick}
@@ -139,15 +142,15 @@ export default function CustomersPage() {
           onRetry={() => active.refetch()}
           emptyTitle={
             searching
-              ? `No customers match “${term}”`
+              ? t("customers.list.emptySearchTitle", { term })
               : groupMode
-                ? "No customers in this group"
-                : "No customers yet"
+                ? t("customers.list.emptyGroupTitle")
+                : t("customers.list.emptyTitle")
           }
           emptyBody={
             searching || groupMode
-              ? "Try a different search term or clear the filters."
-              : "Create your first customer to get started."
+              ? t("customers.list.emptyFilteredBody")
+              : t("customers.list.emptyBody")
           }
           footer={
             !searching && !groupMode ? (

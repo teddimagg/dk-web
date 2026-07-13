@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input, Textarea } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 
 interface FeeForm {
   from: string;
@@ -51,6 +52,7 @@ export function FeeDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useT();
   const toast = useToast();
   const [form, setForm] = useState<FeeForm>(EMPTY);
   const [errors, setErrors] = useState<{ from?: string; amount?: string; itemCode?: string }>({});
@@ -71,9 +73,9 @@ export function FeeDialog({
   function submit() {
     const errs: typeof errors = {};
     const amount = parseNumber(form.amount);
-    if (!form.from) errs.from = "Start date is required";
-    if (!form.amount.trim() || Number.isNaN(amount)) errs.amount = "Enter a valid amount";
-    if (!form.itemCode.trim()) errs.itemCode = "Item code is required";
+    if (!form.from) errs.from = t("members.fee.fromRequired");
+    if (!form.amount.trim() || Number.isNaN(amount)) errs.amount = t("members.fee.amountInvalid");
+    if (!form.itemCode.trim()) errs.itemCode = t("members.fee.itemRequired");
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -106,10 +108,13 @@ export function FeeDialog({
       { path: `/member/${encodeURIComponent(number)}/fee`, method: "POST", body },
       {
         onSuccess: () => {
-          toast.success("Member fee created", `${form.itemCode.trim()} · member ${number}`);
+          toast.success(
+            t("members.fee.created"),
+            t("members.fee.createdDetail", { item: form.itemCode.trim(), number }),
+          );
           onClose();
         },
-        onError: (e) => toast.error("Could not create fee", e.message),
+        onError: (e) => toast.error(t("members.fee.createFailed"), e.message),
       },
     );
   }
@@ -118,8 +123,10 @@ export function FeeDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title="Create member fee"
-      subtitle={`One-time or recurring fee for ${memberName || `member ${number}`}.`}
+      title={t("members.fee.title")}
+      subtitle={t("members.fee.subtitle", {
+        who: memberName || t("members.fee.memberFallback", { number }),
+      })}
       wide
     >
       <form
@@ -130,19 +137,19 @@ export function FeeDialog({
         className="space-y-4"
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Period from" required error={errors.from}>
+          <Field label={t("members.fee.from")} required error={errors.from}>
             <Input type="date" value={form.from} onChange={set("from")} autoFocus />
           </Field>
-          <Field label="Period to" hint="optional">
+          <Field label={t("members.fee.to")} hint={t("members.optional")}>
             <Input type="date" value={form.to} onChange={set("to")} />
           </Field>
-          <Field label="Amount" required error={errors.amount} hint="ISK">
+          <Field label={t("members.field.amount")} required error={errors.amount} hint={t("members.fee.amountHint")}>
             <Input inputMode="decimal" value={form.amount} onChange={set("amount")} placeholder="5000" />
           </Field>
-          <Field label="Item code" required error={errors.itemCode}>
+          <Field label={t("members.field.itemCode")} required error={errors.itemCode}>
             <Input value={form.itemCode} onChange={set("itemCode")} placeholder="D001" />
           </Field>
-          <Field label="Interval" hint="optional">
+          <Field label={t("members.field.interval")} hint={t("members.optional")}>
             <Input list="fee-interval-options" value={form.interval} onChange={set("interval")} placeholder="OneTime" />
           </Field>
           <datalist id="fee-interval-options">
@@ -150,34 +157,32 @@ export function FeeDialog({
             <option value="Monthly" />
             <option value="Yearly" />
           </datalist>
-          <Field label="Campaign" hint="optional">
+          <Field label={t("members.field.campaign")} hint={t("members.optional")}>
             <Input value={form.campaign} onChange={set("campaign")} placeholder="c2020d" />
           </Field>
-          <Field label="Payment mode" hint="optional">
+          <Field label={t("members.field.paymentMode")} hint={t("members.optional")}>
             <Input value={form.payMode} onChange={set("payMode")} placeholder="GKR" />
           </Field>
-          <Field label="Payment term" hint="optional">
+          <Field label={t("members.fee.payTerm")} hint={t("members.optional")}>
             <Input value={form.payTerm} onChange={set("payTerm")} placeholder="D20" />
           </Field>
-          <Field label="Salesperson" hint="optional">
+          <Field label={t("members.field.salesperson")} hint={t("members.optional")}>
             <Input value={form.salesPerson} onChange={set("salesPerson")} placeholder="WEB" />
           </Field>
-          <Field label="Discount" hint="optional">
+          <Field label={t("members.field.discount")} hint={t("members.optional")}>
             <Input inputMode="decimal" value={form.discount} onChange={set("discount")} placeholder="0" />
           </Field>
         </div>
-        <Field label="Memo" hint="optional">
-          <Textarea value={form.memo} onChange={set("memo")} placeholder="This is a donation" />
+        <Field label={t("members.field.memo")} hint={t("members.optional")}>
+          <Textarea value={form.memo} onChange={set("memo")} placeholder={t("members.fee.memoPlaceholder")} />
         </Field>
-        <p className="text-xs text-mist">
-          Card-based fees (CreditCard block) are intentionally not supported from this panel.
-        </p>
+        <p className="text-xs text-mist">{t("members.fee.cardNote")}</p>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={create.isPending}>
-            Create fee
+            {t("members.fee.create")}
           </Button>
         </div>
       </form>

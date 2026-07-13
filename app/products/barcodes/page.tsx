@@ -10,11 +10,13 @@ import { Input } from "@/components/ui/Input";
 import { KV } from "@/components/ui/KV";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatNumber } from "@/lib/format";
 import type { Product } from "@/lib/api/types/products";
 
 /** Barcode lookup tool (GET /barcode/:code). */
 export default function BarcodeSearchPage() {
+  const t = useT();
   const [input, setInput] = useState("");
   const [code, setCode] = useState("");
   const router = useRouter();
@@ -41,21 +43,19 @@ export default function BarcodeSearchPage() {
         <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-ink text-white">
           <Barcode className="size-7" />
         </span>
-        <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">Barcode lookup</h2>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-fog">
-          Scan or type any barcode to find the product it belongs to.
-        </p>
+        <h2 className="mt-4 text-xl font-semibold tracking-tight text-ink">{t("products.barcodeLookup")}</h2>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-fog">{t("products.barcodeIntro")}</p>
         <form onSubmit={submit} className="mx-auto mt-5 flex max-w-md gap-2">
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="e.g. 1234567890"
+            placeholder={t("products.barcodePlaceholder")}
             className="h-12 text-center font-mono text-base"
             autoFocus
-            aria-label="Barcode"
+            aria-label={t("products.barcode")}
           />
           <Button type="submit" size="lg" disabled={!input.trim()} loading={isFetching}>
-            <Search className="size-4" /> Look up
+            <Search className="size-4" /> {t("products.lookUp")}
           </Button>
         </form>
       </Card>
@@ -66,7 +66,7 @@ export default function BarcodeSearchPage() {
             <TriangleAlert className="size-5" />
           </span>
           <div className="min-w-0 text-sm">
-            <p className="font-medium text-ink">No product found for barcode “{code}”</p>
+            <p className="font-medium text-ink">{t("products.barcodeNotFound", { code })}</p>
             <p className="break-words text-fog">{error.message}</p>
           </div>
         </Card>
@@ -86,11 +86,15 @@ export default function BarcodeSearchPage() {
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-lg font-semibold text-ink">{product.Description || product.ItemCode}</h3>
-                {product.Inactive ? <Badge tone="red">Inactive</Badge> : <Badge tone="green">Active</Badge>}
+                {product.Inactive ? (
+                  <Badge tone="red">{t("products.inactive")}</Badge>
+                ) : (
+                  <Badge tone="green">{t("products.active")}</Badge>
+                )}
                 {product.Group && <Badge>{product.Group}</Badge>}
               </div>
               <p className="mt-0.5 font-mono text-[13px] text-fog">
-                {product.ItemCode} · matched barcode {code}
+                {product.ItemCode} · {t("products.matchedBarcode", { code })}
               </p>
             </div>
             <Button
@@ -100,22 +104,22 @@ export default function BarcodeSearchPage() {
                 prefetch(["product", product.ItemCode], `/Product/${encodeURIComponent(product.ItemCode)}`)
               }
             >
-              Open product <ChevronRight className="size-4" />
+              {t("products.openProduct")} <ChevronRight className="size-4" />
             </Button>
           </div>
           <KV
             className="mt-5"
             items={[
               {
-                label: "Unit price (incl. tax)",
+                label: t("products.unitPriceInclTax"),
                 value: formatAmount(product.UnitPrice1WithTax, product.CurrencyCode || "ISK"),
               },
               {
-                label: "Unit price (excl. tax)",
+                label: t("products.unitPriceExclTax"),
                 value: formatAmount(product.UnitPrice1, product.CurrencyCode || "ISK"),
               },
-              { label: "In stock", value: formatNumber(product.TotalQuantityInWarehouse) },
-              { label: "Unit", value: product.UnitCode },
+              { label: t("products.inStock"), value: formatNumber(product.TotalQuantityInWarehouse) },
+              { label: t("products.unit"), value: product.UnitCode },
             ]}
           />
         </Card>

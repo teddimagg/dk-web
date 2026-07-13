@@ -9,6 +9,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Input } from "@/components/ui/Input";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatPercent } from "@/lib/format";
 import type { LedgerAccount } from "@/lib/api/types/ledger";
 
@@ -26,6 +27,7 @@ function isActive(a: LedgerAccount): boolean | undefined {
 }
 
 export default function LedgerAccountsPage() {
+  const t = useT();
   const router = useRouter();
   const prefetch = usePrefetch();
   const [search, setSearch] = useState("");
@@ -48,24 +50,24 @@ export default function LedgerAccountsPage() {
   const columns: Column<LedgerAccount>[] = [
     {
       key: "number",
-      header: "Account",
+      header: t("ledger.col.account"),
       width: "110px",
       render: (a) => <span className="font-mono text-xs text-soot">{String(a.Number)}</span>,
     },
     {
       key: "name",
-      header: "Name",
+      header: t("ledger.field.name"),
       render: (a) => <span className="font-medium text-ink">{accountName(a)}</span>,
     },
     {
       key: "taxcode",
-      header: "Tax code",
+      header: t("ledger.field.taxCode"),
       width: "100px",
       render: (a) => <span className="text-fog">{a.TaxCode || "–"}</span>,
     },
     {
       key: "taxpercent",
-      header: "Tax %",
+      header: t("ledger.col.taxPercent"),
       width: "90px",
       align: "right",
       render: (a) => (
@@ -74,12 +76,16 @@ export default function LedgerAccountsPage() {
     },
     {
       key: "status",
-      header: "Status",
+      header: t("ledger.field.status"),
       width: "100px",
       render: (a) => {
         const active = isActive(a);
         if (active == null) return <span className="text-mist">–</span>;
-        return active ? <Badge tone="green">Active</Badge> : <Badge tone="neutral">Inactive</Badge>;
+        return active ? (
+          <Badge tone="green">{t("ledger.status.active")}</Badge>
+        ) : (
+          <Badge tone="neutral">{t("ledger.status.inactive")}</Badge>
+        );
       },
     },
   ];
@@ -87,18 +93,23 @@ export default function LedgerAccountsPage() {
   return (
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center gap-3 border-b border-line px-4 py-3">
-        <CardTitle icon={<Landmark />}>Chart of accounts</CardTitle>
+        <CardTitle icon={<Landmark />}>{t("ledger.accounts.title")}</CardTitle>
         <div className="relative ml-auto">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Filter by number, name or tax code…"
+            placeholder={t("ledger.accounts.filterPlaceholder")}
             className="w-72 pl-9"
-            aria-label="Filter accounts"
+            aria-label={t("ledger.accounts.filterAria")}
           />
         </div>
-        <Button variant="ghost" size="sm" onClick={() => refetch()} aria-label="Refresh accounts">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => refetch()}
+          aria-label={t("ledger.accounts.refreshAria")}
+        >
           <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
         </Button>
       </div>
@@ -117,16 +128,13 @@ export default function LedgerAccountsPage() {
             `/generalledger/account/${encodeURIComponent(String(a.Number))}/transaction/1/${TX_COUNT}`,
           )
         }
-        emptyTitle="No accounts found"
-        emptyBody={
-          search
-            ? "No account matches the filter."
-            : "The general ledger returned no accounts for this company."
-        }
+        emptyTitle={t("ledger.accounts.emptyTitle")}
+        emptyBody={search ? t("ledger.accounts.emptySearch") : t("ledger.accounts.emptyNone")}
         footer={
           <div className="border-t border-line px-4 py-3 text-[13px] text-fog tnum">
-            {filtered?.length ?? 0}
-            {search && data ? ` of ${data.length}` : ""} accounts
+            {search && data
+              ? t("ledger.accounts.countFiltered", { n: filtered?.length ?? 0, total: data.length })
+              : t("ledger.accounts.count", { n: filtered?.length ?? 0 })}
           </div>
         }
       />

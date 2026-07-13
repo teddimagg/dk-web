@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation, useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import {
   productGroupCode,
   productGroupLabel,
@@ -59,6 +60,7 @@ export function ProductFormDialog({
 }) {
   const isEdit = !!product;
   const toast = useToast();
+  const t = useT();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
 
@@ -89,13 +91,13 @@ export function ProductFormDialog({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: Partial<Record<keyof FormState, string>> = {};
-    if (!isEdit && !form.itemCode.trim()) errs.itemCode = "Item code is required";
+    if (!isEdit && !form.itemCode.trim()) errs.itemCode = t("products.itemCodeRequired");
     if (form.taxPercent.trim() === "" || Number.isNaN(parseNum(form.taxPercent)))
-      errs.taxPercent = "Tax % must be a number";
+      errs.taxPercent = t("products.taxNumeric");
     if (form.priceWithTax.trim() !== "" && Number.isNaN(parseNum(form.priceWithTax)))
-      errs.priceWithTax = "Must be a number";
+      errs.priceWithTax = t("products.mustBeNumber");
     if (form.costPrice.trim() !== "" && Number.isNaN(parseNum(form.costPrice)))
-      errs.costPrice = "Must be a number";
+      errs.costPrice = t("products.mustBeNumber");
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -118,14 +120,16 @@ export function ProductFormDialog({
       {
         onSuccess: (saved) => {
           toast.success(
-            product ? "Product updated" : "Product created",
-            product ? `${product.ItemCode} saved to dkPlus.` : `${form.itemCode.trim()} added to the catalogue.`,
+            product ? t("products.updated") : t("products.created"),
+            product
+              ? t("products.updatedDetail", { code: product.ItemCode })
+              : t("products.createdDetail", { code: form.itemCode.trim() }),
           );
           onClose();
           onSaved?.(saved);
         },
         onError: (err) =>
-          toast.error(product ? "Could not update product" : "Could not create product", err.message),
+          toast.error(product ? t("products.updateFailed") : t("products.createFailed"), err.message),
       },
     );
   }
@@ -137,42 +141,38 @@ export function ProductFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={product ? `Edit ${product.ItemCode}` : "New product"}
-      subtitle={
-        isEdit
-          ? "Changes are saved straight to the dkPlus item register."
-          : "Creates the product in the dkPlus item register."
-      }
+      title={product ? t("products.editTitle", { code: product.ItemCode }) : t("products.newProduct")}
+      subtitle={isEdit ? t("products.editSubtitle") : t("products.createSubtitle")}
     >
       <form onSubmit={submit} className="space-y-4">
         {!isEdit && (
-          <Field label="Item code" required error={errors.itemCode}>
+          <Field label={t("products.itemCode")} required error={errors.itemCode}>
             <Input
               value={form.itemCode}
               onChange={(e) => setForm({ ...form, itemCode: e.target.value })}
-              placeholder="e.g. sndkost"
+              placeholder={t("products.itemCodeExample")}
               autoFocus
             />
           </Field>
         )}
-        <Field label="Description">
+        <Field label={t("products.description")}>
           <Input
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
-            placeholder="Product name"
+            placeholder={t("products.descriptionPlaceholder")}
           />
         </Field>
-        <Field label="Description 2" hint="optional">
+        <Field label={t("products.description2")} hint={t("products.optional")}>
           <Input
             value={form.description2}
             onChange={(e) => setForm({ ...form, description2: e.target.value })}
-            placeholder="Secondary description"
+            placeholder={t("products.description2Placeholder")}
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Group" hint="optional">
+          <Field label={t("products.group")} hint={t("products.optional")}>
             <Select value={form.group} onChange={(e) => setForm({ ...form, group: e.target.value })}>
-              <option value="">No group</option>
+              <option value="">{t("products.noGroup")}</option>
               {form.group && !knownGroup && <option value={form.group}>{form.group}</option>}
               {groupOptions.map((g, i) => {
                 const code = productGroupCode(g);
@@ -185,7 +185,7 @@ export function ProductFormDialog({
               })}
             </Select>
           </Field>
-          <Field label="Tax %" required error={errors.taxPercent}>
+          <Field label={t("products.taxPercent")} required error={errors.taxPercent}>
             <Input
               value={form.taxPercent}
               onChange={(e) => setForm({ ...form, taxPercent: e.target.value })}
@@ -195,7 +195,7 @@ export function ProductFormDialog({
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Unit price (incl. tax)" hint="optional" error={errors.priceWithTax}>
+          <Field label={t("products.unitPriceInclTax")} hint={t("products.optional")} error={errors.priceWithTax}>
             <Input
               value={form.priceWithTax}
               onChange={(e) => setForm({ ...form, priceWithTax: e.target.value })}
@@ -204,7 +204,7 @@ export function ProductFormDialog({
               className="text-right tnum"
             />
           </Field>
-          <Field label="Cost price" hint="optional" error={errors.costPrice}>
+          <Field label={t("products.costPrice")} hint={t("products.optional")} error={errors.costPrice}>
             <Input
               value={form.costPrice}
               onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
@@ -222,7 +222,7 @@ export function ProductFormDialog({
               checked={form.showInWebShop}
               onChange={(e) => setForm({ ...form, showInWebShop: e.target.checked })}
             />
-            Show in web shop
+            {t("products.showInWebShop")}
           </label>
           {isEdit && (
             <label className="flex cursor-pointer items-center gap-2 text-sm text-soot">
@@ -232,16 +232,16 @@ export function ProductFormDialog({
                 checked={form.inactive}
                 onChange={(e) => setForm({ ...form, inactive: e.target.checked })}
               />
-              Inactive
+              {t("products.inactive")}
             </label>
           )}
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={save.isPending}>
-            {isEdit ? "Save changes" : "Create product"}
+            {isEdit ? t("products.saveChanges") : t("products.createProduct")}
           </Button>
         </div>
       </form>

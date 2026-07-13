@@ -8,6 +8,12 @@ import { Field, Input } from "@/components/ui/Input";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { JsonView } from "@/components/ui/JsonView";
 import { useToast } from "@/components/ui/Toast";
+import {
+  CustomerPicker,
+  ProductPicker,
+  SalespersonPicker,
+  WarehousePicker,
+} from "@/components/shell/pickers";
 import { useDkMutation } from "@/lib/hooks/useDk";
 import { formatAmount, formatNumber, formatPercent } from "@/lib/format";
 import { useT } from "@/lib/i18n";
@@ -92,46 +98,45 @@ export default function CalculatorPage() {
           </CardTitle>
 
           <div className="mb-5 grid gap-4 sm:grid-cols-2">
-            <Field label={t("calc.customer")} hint={t("calc.customerHint")} required>
-              <Input
-                value={customer}
-                onChange={(e) => setCustomer(e.target.value)}
-                placeholder="e.g. 1710794709"
-              />
+            <Field
+              label={t("calc.customer")}
+              hint={t("calc.customerHint")}
+              help={t("calc.customerHelp")}
+              required
+            >
+              <CustomerPicker value={customer} onChange={setCustomer} placeholder="1710794709" />
             </Field>
             <Field label={t("calc.salesperson")} hint={t("calc.optional")}>
-              <Input
-                value={salesPerson}
-                onChange={(e) => setSalesPerson(e.target.value)}
-                placeholder="e.g. web"
-              />
+              <SalespersonPicker value={salesPerson} onChange={setSalesPerson} placeholder="web" />
             </Field>
           </div>
 
           <div className="space-y-2">
-            <div className="grid grid-cols-[1fr_110px_120px_36px] gap-2 px-1 text-xs font-medium uppercase tracking-wide text-mist">
+            <div className="grid grid-cols-[1fr_110px_150px_36px] gap-2 px-1 text-xs font-medium uppercase tracking-wide text-mist">
               <span>{t("calc.itemCode")}</span>
               <span>{t("calc.qty")}</span>
               <span>{t("calc.warehouse")}</span>
               <span />
             </div>
             {lines.map((l) => (
-              <div key={l.id} className="grid grid-cols-[1fr_110px_120px_36px] gap-2">
-                <Input
+              <div key={l.id} className="grid grid-cols-[1fr_110px_150px_36px] gap-2">
+                <ProductPicker
                   value={l.ItemCode}
-                  onChange={(e) => patchLine(l.id, { ItemCode: e.target.value })}
-                  placeholder="e.g. 007059"
-                  onKeyDown={(e) => e.key === "Enter" && canCalc && run()}
+                  onChange={(v) => patchLine(l.id, { ItemCode: v })}
+                  placeholder="007059"
                 />
                 <Input
                   type="number"
+                  inputMode="decimal"
+                  step="any"
                   value={l.Quantity}
                   onChange={(e) => patchLine(l.id, { Quantity: e.target.value })}
                   className="text-right tnum"
+                  aria-label={t("calc.qty")}
                 />
-                <Input
+                <WarehousePicker
                   value={l.Warehouse}
-                  onChange={(e) => patchLine(l.id, { Warehouse: e.target.value })}
+                  onChange={(v) => patchLine(l.id, { Warehouse: v })}
                   placeholder={t("calc.optional")}
                 />
                 <button

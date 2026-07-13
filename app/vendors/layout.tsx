@@ -1,22 +1,23 @@
 "use client";
 
-import { NavTabs } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ModuleFrame } from "@/components/shell/ModuleFrame";
+import { useT } from "@/lib/i18n";
 
 export default function VendorsLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="Vendors module" title="Vendors" />
-      <NavTabs
-        tabs={[
-          { href: "/vendors", label: "Vendors", exact: true },
-          { href: "/vendors/invoices", label: "Invoices" },
-          { href: "/vendors/approvals", label: "Approvals" },
-          { href: "/vendors/purchases", label: "Purchase orders" },
-          { href: "/vendors/transactions", label: "Transactions" },
-        ]}
-      />
+    <ModuleFrame
+      href="/vendors"
+      title={t("vendors.title")}
+      tabs={[
+        { href: "/vendors", label: t("vendors.tabs.vendors"), exact: true },
+        { href: "/vendors/invoices", label: t("vendors.tabs.invoices") },
+        { href: "/vendors/approvals", label: t("vendors.tabs.approvals") },
+        { href: "/vendors/purchases", label: t("vendors.tabs.purchases") },
+        { href: "/vendors/transactions", label: t("vendors.tabs.transactions") },
+      ]}
+    >
       {children}
-    </div>
+    </ModuleFrame>
   );
 }

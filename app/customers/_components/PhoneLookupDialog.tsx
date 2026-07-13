@@ -9,6 +9,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input } from "@/components/ui/Input";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { asCustomerRows } from "@/lib/api/types/customers";
 
 /**
@@ -19,6 +20,7 @@ import { asCustomerRows } from "@/lib/api/types/customers";
 export function PhoneLookupDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [phone, setPhone] = useState("");
   const [submitted, setSubmitted] = useState("");
+  const t = useT();
 
   const lookup = useDkQuery<unknown>(
     ["customer-phone", submitted],
@@ -44,21 +46,21 @@ export function PhoneLookupDialog({ open, onClose }: { open: boolean; onClose: (
     <Dialog
       open={open}
       onClose={onClose}
-      title="Phone lookup"
-      subtitle="Find a customer by any phone number on the card, its contacts or receivers"
+      title={t("customers.phone.title")}
+      subtitle={t("customers.phone.subtitle")}
     >
       <form onSubmit={submit} className="flex items-end gap-2">
-        <Field label="Phone number" className="flex-1">
+        <Field label={t("customers.phone.label")} className="flex-1">
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="e.g. 5885522"
+            placeholder={t("customers.phone.placeholder")}
             inputMode="tel"
             autoFocus
           />
         </Field>
         <Button type="submit" loading={lookup.isFetching || display.isFetching} disabled={!phone.trim()}>
-          <Search className="size-4" /> Look up
+          <Search className="size-4" /> {t("customers.phone.submit")}
         </Button>
       </form>
 
@@ -68,7 +70,8 @@ export function PhoneLookupDialog({ open, onClose }: { open: boolean; onClose: (
 
           {lookup.error && (
             <p className="text-sm text-fog">
-              No customer found for <span className="font-medium text-ink">{submitted}</span>
+              {t("customers.phone.noMatchPrefix")}{" "}
+              <span className="font-medium text-ink">{submitted}</span>
               {lookup.error.status ? ` (${lookup.error.status})` : ""}.
             </p>
           )}
@@ -84,9 +87,9 @@ export function PhoneLookupDialog({ open, onClose }: { open: boolean; onClose: (
                   >
                     <span>
                       <span className="block text-sm font-medium text-ink">{c.Name || c.Number}</span>
-                      <span className="block text-xs text-fog">Nº {c.Number}</span>
+                      <span className="block text-xs text-fog">{t("customers.meta", { number: c.Number })}</span>
                     </span>
-                    <Badge tone="green">Match</Badge>
+                    <Badge tone="green">{t("customers.badge.match")}</Badge>
                   </Link>
                 </li>
               ))}
@@ -95,7 +98,7 @@ export function PhoneLookupDialog({ open, onClose }: { open: boolean; onClose: (
 
           {!display.isLoading && !display.error && displayText && (
             <div>
-              <p className="mb-1.5 text-[13px] font-medium text-soot">Display text</p>
+              <p className="mb-1.5 text-[13px] font-medium text-soot">{t("customers.phone.displayText")}</p>
               <pre className="overflow-x-auto rounded-xl bg-haze px-4 py-3 text-xs leading-relaxed text-soot whitespace-pre-wrap">
                 {displayText}
               </pre>

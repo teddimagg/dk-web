@@ -7,6 +7,7 @@ import { ConfirmDialog } from "@/components/ui/Dialog";
 import { DataTable } from "@/components/ui/DataTable";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation, useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { timeAgo } from "@/lib/format";
 import type { CustomerContact } from "@/lib/api/types/customers";
 import { ContactDialog } from "./ContactDialog";
@@ -23,6 +24,7 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
   const [editing, setEditing] = useState<CustomerContact | null>(null);
   const [deleting, setDeleting] = useState<CustomerContact | null>(null);
   const toast = useToast();
+  const t = useT();
 
   const remove = useDkMutation<unknown>({ invalidates: [["customer", customerNumber]] });
 
@@ -35,11 +37,14 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
       },
       {
         onSuccess: () => {
-          toast.success("Contact deleted", `${deleting.Name || deleting.Number} was removed.`);
+          toast.success(
+            t("customers.contacts.deleted"),
+            t("customers.contacts.deletedDetail", { name: deleting.Name || deleting.Number }),
+          );
           setDeleting(null);
         },
         onError: (e) => {
-          toast.error("Could not delete contact", e.message);
+          toast.error(t("customers.contacts.deleteFailed"), e.message);
           setDeleting(null);
         },
       },
@@ -50,7 +55,7 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
     <div>
       <div className="mb-3 flex justify-end">
         <Button size="sm" onClick={() => setAdding(true)}>
-          <Plus className="size-4" /> Add contact
+          <Plus className="size-4" /> {t("customers.contacts.add")}
         </Button>
       </div>
 
@@ -58,31 +63,39 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
         columns={[
           {
             key: "number",
-            header: "Number",
+            header: t("customers.col.number"),
             width: "110px",
             render: (c) => <span className="font-mono text-xs text-soot">{c.Number}</span>,
           },
           {
             key: "name",
-            header: "Name",
+            header: t("customers.col.name"),
             render: (c) => <span className="font-medium text-ink">{c.Name || "–"}</span>,
           },
-          { key: "title", header: "Title", render: (c) => c.Title || <span className="text-mist">–</span> },
+          {
+            key: "title",
+            header: t("customers.col.title"),
+            render: (c) => c.Title || <span className="text-mist">–</span>,
+          },
           {
             key: "department",
-            header: "Department",
+            header: t("customers.col.department"),
             render: (c) => c.Department || <span className="text-mist">–</span>,
           },
-          { key: "email", header: "Email", render: (c) => c.Email || <span className="text-mist">–</span> },
+          {
+            key: "email",
+            header: t("customers.col.email"),
+            render: (c) => c.Email || <span className="text-mist">–</span>,
+          },
           {
             key: "phone",
-            header: "Phone",
+            header: t("customers.col.phone"),
             render: (c) =>
               c.Phone || c.PhoneMobile || c.PhoneLocal || <span className="text-mist">–</span>,
           },
           {
             key: "modified",
-            header: "Modified",
+            header: t("customers.col.modified"),
             align: "right",
             render: (c) => <span className="text-fog">{timeAgo(c.Modified)}</span>,
           },
@@ -96,7 +109,7 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label={`Edit contact ${c.Name || c.Number}`}
+                  aria-label={t("customers.contacts.editAria", { name: c.Name || c.Number })}
                   onClick={() => setEditing(c)}
                 >
                   <Pencil className="size-4" />
@@ -104,7 +117,7 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  aria-label={`Delete contact ${c.Name || c.Number}`}
+                  aria-label={t("customers.contacts.deleteAria", { name: c.Name || c.Number })}
                   onClick={() => setDeleting(c)}
                 >
                   <Trash2 className="size-4" />
@@ -118,8 +131,8 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
         loading={contacts.isLoading}
         error={contacts.error}
         onRetry={() => contacts.refetch()}
-        emptyTitle="No contacts"
-        emptyBody="This customer has no contact persons yet — add the first one."
+        emptyTitle={t("customers.contacts.emptyTitle")}
+        emptyBody={t("customers.contacts.emptyBody")}
       />
 
       <ContactDialog open={adding} onClose={() => setAdding(false)} customerNumber={customerNumber} />
@@ -132,14 +145,17 @@ export function ContactsTab({ customerNumber }: { customerNumber: string }) {
       <ConfirmDialog
         open={!!deleting}
         onClose={() => setDeleting(null)}
-        title={`Delete contact ${deleting?.Name || deleting?.Number}?`}
+        title={t("customers.contacts.confirmDeleteTitle", {
+          name: deleting?.Name || deleting?.Number || "",
+        })}
         body={
           <>
-            This permanently removes contact <strong>{deleting?.Name || deleting?.Number}</strong> from
-            customer {customerNumber} in dkPlus. This cannot be undone.
+            {t("customers.contacts.confirmDeleteBody1")}{" "}
+            <strong>{deleting?.Name || deleting?.Number}</strong>{" "}
+            {t("customers.contacts.confirmDeleteBody2", { number: customerNumber })}
           </>
         }
-        confirmLabel="Delete contact"
+        confirmLabel={t("customers.contacts.confirmDeleteAction")}
         loading={remove.isPending}
         onConfirm={confirmDelete}
       />

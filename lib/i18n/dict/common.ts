@@ -77,6 +77,8 @@ export const commonDict = {
     "period.toHint": "inclusive",
     "period.apply": "Apply range",
     "period.ariaLabel": "Reporting period",
+    "period.fromDate": "from {date}",
+    "period.untilDate": "until {date}",
 
     // ── Onboarding & companies ────────────────────────────────────
     "onboard.eyebrow": "dkPlus workspace",
@@ -112,6 +114,8 @@ export const commonDict = {
     "companies.disconnect": "Disconnect {name}",
     "companies.addAnother": "Connect another company",
     "companies.meta": "Nº {number}",
+    "companies.ssnShort": "SSN",
+    "companies.tokenWord": "token",
     "companies.addedAgo": "added {ago}",
     "companies.confirmTitle": "Disconnect {name}?",
     "companies.confirmBody":
@@ -195,6 +199,8 @@ export const commonDict = {
     "calc.draftLines": "Draft lines",
     "calc.customer": "Customer number",
     "calc.customerHint": "applies their price rules",
+    "calc.customerHelp":
+      "dk prices the draft with this customer's agreements and discount rules — the same customer gets the same price here as on a real invoice. Search by name or number.",
     "calc.salesperson": "Salesperson",
     "calc.optional": "optional",
     "calc.itemCode": "Item code",
@@ -302,6 +308,8 @@ export const commonDict = {
     "period.toHint": "að meðtöldu",
     "period.apply": "Beita tímabili",
     "period.ariaLabel": "Tímabil skýrslu",
+    "period.fromDate": "frá {date}",
+    "period.untilDate": "til {date}",
 
     // ── Tenging og fyrirtæki ──────────────────────────────────────
     "onboard.eyebrow": "dkPlus vinnusvæði",
@@ -337,6 +345,8 @@ export const commonDict = {
     "companies.disconnect": "Aftengja {name}",
     "companies.addAnother": "Tengja annað fyrirtæki",
     "companies.meta": "Nr. {number}",
+    "companies.ssnShort": "kt.",
+    "companies.tokenWord": "lykill",
     "companies.addedAgo": "bætt við {ago}",
     "companies.confirmTitle": "Aftengja {name}?",
     "companies.confirmBody":
@@ -420,6 +430,8 @@ export const commonDict = {
     "calc.draftLines": "Línudrög",
     "calc.customer": "Númer viðskiptavinar",
     "calc.customerHint": "beitir verðreglum viðkomandi",
+    "calc.customerHelp":
+      "dk verðleggur drögin með samningum og afsláttarreglum þessa viðskiptavinar — sami viðskiptavinur fær sama verð hér og á alvöru reikningi. Leitaðu eftir nafni eða númeri.",
     "calc.salesperson": "Sölumaður",
     "calc.optional": "valfrjálst",
     "calc.itemCode": "Vörunúmer",

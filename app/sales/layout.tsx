@@ -1,22 +1,23 @@
 "use client";
 
-import { NavTabs } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ModuleFrame } from "@/components/shell/ModuleFrame";
+import { useT } from "@/lib/i18n";
 
 export default function SalesLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="Sales module" title="Sales" />
-      <NavTabs
-        tabs={[
-          { href: "/sales/invoices", label: "Invoices" },
-          { href: "/sales/orders", label: "Orders" },
-          { href: "/sales/quotes", label: "Quotes" },
-          { href: "/sales/salespeople", label: "Salespeople" },
-          { href: "/sales/payment-types", label: "Payment types" },
-        ]}
-      />
+    <ModuleFrame
+      href="/sales"
+      title={t("sales.title")}
+      tabs={[
+        { href: "/sales/invoices", label: t("sales.tabs.invoices") },
+        { href: "/sales/orders", label: t("sales.tabs.orders") },
+        { href: "/sales/quotes", label: t("sales.tabs.quotes") },
+        { href: "/sales/salespeople", label: t("sales.tabs.salespeople") },
+        { href: "/sales/payment-types", label: t("sales.tabs.paymentTypes") },
+      ]}
+    >
       {children}
-    </div>
+    </ModuleFrame>
   );
 }

@@ -1,14 +1,17 @@
 "use client";
 
-import { NavTabs } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ModuleFrame } from "@/components/shell/ModuleFrame";
+import { useT } from "@/lib/i18n";
 
 export default function MembersLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="Members module" title="Members" />
-      <NavTabs tabs={[{ href: "/members", label: "Members" }]} />
+    <ModuleFrame
+      href="/members"
+      title={t("members.title")}
+      tabs={[{ href: "/members", label: t("module.members.label") }]}
+    >
       {children}
-    </div>
+    </ModuleFrame>
   );
 }

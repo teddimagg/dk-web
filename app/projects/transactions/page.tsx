@@ -9,6 +9,7 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatDate } from "@/lib/format";
 import type { ProjectTransaction } from "@/lib/api/types/projects";
 
@@ -42,6 +43,7 @@ function buildQuery(f: Filters): string {
 }
 
 export default function ProjectTransactionsPage() {
+  const t = useT();
   const [page, setPage] = useState(1);
   const [draft, setDraft] = useState<Filters>(EMPTY_FILTERS);
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
@@ -71,47 +73,49 @@ export default function ProjectTransactionsPage() {
   const columns: Column<ProjectTransaction>[] = [
     {
       key: "date",
-      header: "Journal date",
+      header: t("projects.tx.colDate"),
       width: "120px",
-      render: (t) => <span className="tnum">{formatDate(t.JournalDate ?? t.Created)}</span>,
+      render: (tx) => <span className="tnum">{formatDate(tx.JournalDate ?? tx.Created)}</span>,
     },
     {
       key: "project",
-      header: "Project",
+      header: t("projects.tx.colProject"),
       width: "110px",
-      render: (t) => (
-        <span className="font-mono text-xs text-soot">{t.Project ?? t.Number ?? t.Dim1 ?? "–"}</span>
+      render: (tx) => (
+        <span className="font-mono text-xs text-soot">
+          {tx.Project ?? tx.Number ?? tx.Dim1 ?? "–"}
+        </span>
       ),
     },
     {
       key: "account",
-      header: "Account",
+      header: t("projects.tx.colAccount"),
       width: "100px",
-      render: (t) => <span className="font-mono text-xs text-soot">{t.Account ?? "–"}</span>,
+      render: (tx) => <span className="font-mono text-xs text-soot">{tx.Account ?? "–"}</span>,
     },
     {
       key: "text",
-      header: "Text",
-      render: (t) => <span className="block max-w-md truncate text-ink">{t.Text || "–"}</span>,
+      header: t("projects.tx.colText"),
+      render: (tx) => <span className="block max-w-md truncate text-ink">{tx.Text || "–"}</span>,
     },
     {
       key: "reference",
-      header: "Reference",
+      header: t("projects.tx.colReference"),
       width: "110px",
-      render: (t) => <span className="text-fog">{t.Reference || "–"}</span>,
+      render: (tx) => <span className="text-fog">{tx.Reference || "–"}</span>,
     },
     {
       key: "voucher",
-      header: "Voucher",
+      header: t("projects.tx.colVoucher"),
       width: "100px",
-      render: (t) => <span className="text-fog">{t.Voucher || "–"}</span>,
+      render: (tx) => <span className="text-fog">{tx.Voucher || "–"}</span>,
     },
     {
       key: "amount",
-      header: "Amount",
+      header: t("projects.tx.colAmount"),
       align: "right",
-      render: (t) => (
-        <span className="tnum font-medium">{formatAmount(t.Amount, t.Currency ?? "ISK")}</span>
+      render: (tx) => (
+        <span className="tnum font-medium">{formatAmount(tx.Amount, tx.Currency ?? "ISK")}</span>
       ),
     },
   ];
@@ -120,51 +124,51 @@ export default function ProjectTransactionsPage() {
     <div className="space-y-4">
       <Card className="p-5">
         <CardTitle icon={<Filter />} className="mb-4">
-          Filter project transactions
+          {t("projects.tx.filterTitle")}
         </CardTitle>
         <form onSubmit={apply} className="flex flex-wrap items-end gap-3">
-          <Field label="Created after" className="w-40">
+          <Field label={t("projects.tx.createdAfter")} className="w-40">
             <Input
               type="date"
               value={draft.createdAfter}
               onChange={(e) => setDraft({ ...draft, createdAfter: e.target.value })}
             />
           </Field>
-          <Field label="Created before" className="w-40">
+          <Field label={t("projects.tx.createdBefore")} className="w-40">
             <Input
               type="date"
               value={draft.createdBefore}
               onChange={(e) => setDraft({ ...draft, createdBefore: e.target.value })}
             />
           </Field>
-          <Field label="Account" className="w-32">
+          <Field label={t("projects.tx.account")} className="w-32">
             <Input
               value={draft.account}
               onChange={(e) => setDraft({ ...draft, account: e.target.value })}
-              placeholder="e.g. 1150"
+              placeholder={t("projects.tx.accountPh")}
             />
           </Field>
-          <Field label="Voucher" className="w-32">
+          <Field label={t("projects.tx.voucher")} className="w-32">
             <Input
               value={draft.voucher}
               onChange={(e) => setDraft({ ...draft, voucher: e.target.value })}
-              placeholder="e.g. s21"
+              placeholder={t("projects.tx.voucherPh")}
             />
           </Field>
-          <Field label="Reference" className="w-32">
+          <Field label={t("projects.tx.reference")} className="w-32">
             <Input
               value={draft.reference}
               onChange={(e) => setDraft({ ...draft, reference: e.target.value })}
-              placeholder="e.g. S001"
+              placeholder={t("projects.tx.referencePh")}
             />
           </Field>
           <div className="flex items-center gap-2 pb-0.5">
             <Button type="submit" size="sm" variant="secondary">
-              <Filter className="size-4" /> Apply
+              <Filter className="size-4" /> {t("projects.tx.apply")}
             </Button>
             {hasFilters && (
               <Button type="button" size="sm" variant="ghost" onClick={clear}>
-                <X className="size-4" /> Clear
+                <X className="size-4" /> {t("projects.tx.clear")}
               </Button>
             )}
           </div>
@@ -173,24 +177,25 @@ export default function ProjectTransactionsPage() {
 
       <Card className="overflow-hidden">
         <div className="flex items-center justify-between border-b border-line px-6 py-4">
-          <CardTitle icon={<ArrowRightLeft />}>Project transaction feed</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => refetch()} aria-label="Refresh transactions">
+          <CardTitle icon={<ArrowRightLeft />}>{t("projects.tx.feedTitle")}</CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            aria-label={t("projects.tx.refreshAria")}
+          >
             <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
           </Button>
         </div>
         <DataTable<ProjectTransaction>
           columns={columns}
           rows={data}
-          rowKey={(t, i) => t.ID ?? `${t.Voucher ?? ""}-${i}`}
+          rowKey={(tx, i) => tx.ID ?? `${tx.Voucher ?? ""}-${i}`}
           loading={isLoading || isFetching}
           error={error}
           onRetry={() => refetch()}
-          emptyTitle="No project transactions"
-          emptyBody={
-            hasFilters
-              ? "Nothing matches the current filters — widen the date range or clear them."
-              : "No project transactions have been posted yet."
-          }
+          emptyTitle={t("projects.tx.emptyTitle")}
+          emptyBody={hasFilters ? t("projects.tx.emptyFiltered") : t("projects.tx.emptyNone")}
           footer={<Pagination page={page} onPage={setPage} hasMore={hasMore} loading={isFetching} />}
         />
       </Card>

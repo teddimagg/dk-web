@@ -8,12 +8,15 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Tabs } from "@/components/ui/Tabs";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatDateTime, formatHours } from "@/lib/format";
 import type { TimeClockEntry } from "@/lib/api/types/platform";
 import { RegisterEntryDialog } from "./_components/RegisterEntryDialog";
 
-function employeeName(e: TimeClockEntry): string {
-  return e.Name ?? e.EmployeeName ?? "Unnamed employee";
+type T = ReturnType<typeof useT>;
+
+function employeeName(e: TimeClockEntry, t: T): string {
+  return e.Name ?? e.EmployeeName ?? t("timeclock.unnamedEmployee");
 }
 
 function employeeNumber(e: TimeClockEntry): string {
@@ -21,14 +24,15 @@ function employeeNumber(e: TimeClockEntry): string {
   return n != null ? String(n) : "–";
 }
 
-function entryType(e: TimeClockEntry): string {
+function entryType(e: TimeClockEntry, t: T): string {
   if (e.TypeName) return e.TypeName;
   if (e.EntryTypeName) return e.EntryTypeName;
-  if (e.Type != null) return `Type ${e.Type}`;
-  return "Entry";
+  if (e.Type != null) return t("timeclock.entryTypeN", { n: e.Type });
+  return t("timeclock.entryFallback");
 }
 
 export default function TimeclockPage() {
+  const t = useT();
   const [tab, setTab] = useState<"in" | "out">("in");
   const [registering, setRegistering] = useState(false);
 
@@ -41,36 +45,36 @@ export default function TimeclockPage() {
   const columns: Column<TimeClockEntry>[] = [
     {
       key: "employee",
-      header: "Employee",
+      header: t("timeclock.col.employee"),
       render: (e) => (
         <div>
-          <p className="font-medium text-ink">{employeeName(e)}</p>
-          <p className="text-xs text-fog tnum">Nº {employeeNumber(e)}</p>
+          <p className="font-medium text-ink">{employeeName(e, t)}</p>
+          <p className="text-xs text-fog tnum">{t("timeclock.employeeNo", { n: employeeNumber(e) })}</p>
         </div>
       ),
     },
     {
       key: "type",
-      header: "Entry type",
-      render: (e) => <Badge tone={tab === "in" ? "green" : "neutral"}>{entryType(e)}</Badge>,
+      header: t("timeclock.col.entryType"),
+      render: (e) => <Badge tone={tab === "in" ? "green" : "neutral"}>{entryType(e, t)}</Badge>,
     },
     {
       key: "start",
-      header: "Start",
+      header: t("timeclock.col.start"),
       render: (e) => <span className="tnum">{formatDateTime(e.Start)}</span>,
     },
     ...(tab === "out"
       ? [
           {
             key: "end",
-            header: "End",
+            header: t("timeclock.col.end"),
             render: (e) => <span className="tnum">{formatDateTime(e.End)}</span>,
           } satisfies Column<TimeClockEntry>,
         ]
       : []),
     {
       key: "hours",
-      header: "Hours",
+      header: t("timeclock.col.hours"),
       align: "right",
       render: (e) => <span className="tnum font-medium">{formatHours(e.TotalHours)}</span>,
     },
@@ -92,22 +96,22 @@ export default function TimeclockPage() {
                 }}
                 disabled={fetching}
               >
-                <RefreshCw className={`size-4 ${fetching ? "animate-spin" : ""}`} /> Refresh
+                <RefreshCw className={`size-4 ${fetching ? "animate-spin" : ""}`} /> {t("ui.refresh")}
               </Button>
               <Button size="sm" onClick={() => setRegistering(true)}>
-                <Plus className="size-4" /> Register entry
+                <Plus className="size-4" /> {t("timeclock.registerEntry")}
               </Button>
             </div>
           }
         >
-          Time clock — live registrations
+          {t("timeclock.cardTitle")}
         </CardTitle>
 
         <div className="mt-5">
           <Tabs
             tabs={[
-              { id: "in", label: "Clocked in", count: inQ.data?.length },
-              { id: "out", label: "Clocked out", count: outQ.data?.length },
+              { id: "in", label: t("timeclock.clockedIn"), count: inQ.data?.length },
+              { id: "out", label: t("timeclock.clockedOut"), count: outQ.data?.length },
             ]}
             active={tab}
             onChange={(id) => setTab(id as "in" | "out")}
@@ -122,12 +126,8 @@ export default function TimeclockPage() {
             loading={active.isLoading || active.isFetching}
             error={active.error}
             onRetry={() => active.refetch()}
-            emptyTitle={tab === "in" ? "Nobody is clocked in" : "No clocked-out entries"}
-            emptyBody={
-              tab === "in"
-                ? "Employees who clock in appear here in real time — hit Refresh to re-check."
-                : "Completed registrations show up here once employees clock out."
-            }
+            emptyTitle={tab === "in" ? t("timeclock.emptyInTitle") : t("timeclock.emptyOutTitle")}
+            emptyBody={tab === "in" ? t("timeclock.emptyInBody") : t("timeclock.emptyOutBody")}
           />
         </div>
       </Card>

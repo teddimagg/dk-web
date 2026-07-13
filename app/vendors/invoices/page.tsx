@@ -9,6 +9,7 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Pagination } from "@/components/ui/Pagination";
 import { Tabs } from "@/components/ui/Tabs";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT, type TVars } from "@/lib/i18n";
 import { formatAmount, formatDate } from "@/lib/format";
 import type { VendorInvoice } from "@/lib/api/types/vendors";
 import { invoiceAmount, invoiceId, invoiceNumber, invoiceVendorLabel } from "../_components/helpers";
@@ -16,25 +17,30 @@ import { approvalBadge, InvoiceDetailDialog } from "../_components/InvoiceDetail
 
 const PAGE_SIZE = 25;
 
-function invoiceColumns(): Column<VendorInvoice>[] {
+function invoiceColumns(t: (key: string, vars?: TVars) => string): Column<VendorInvoice>[] {
   return [
     {
       key: "id",
-      header: "ID",
+      header: t("vendors.col.id"),
       width: "90px",
       render: (inv) => <span className="font-mono text-xs text-fog">{invoiceId(inv) ?? "–"}</span>,
     },
-    { key: "number", header: "Number", render: (inv) => <span className="font-medium">{invoiceNumber(inv)}</span> },
-    { key: "vendor", header: "Vendor", render: (inv) => invoiceVendorLabel(inv) },
-    { key: "date", header: "Date", width: "110px", render: (inv) => formatDate(inv.Date ?? inv.Created) },
-    { key: "due", header: "Due date", width: "110px", render: (inv) => formatDate(inv.DueDate) },
+    { key: "number", header: t("vendors.col.number"), render: (inv) => <span className="font-medium">{invoiceNumber(inv)}</span> },
+    { key: "vendor", header: t("vendors.col.vendor"), render: (inv) => invoiceVendorLabel(inv) },
+    { key: "date", header: t("vendors.col.date"), width: "110px", render: (inv) => formatDate(inv.Date ?? inv.Created) },
+    { key: "due", header: t("vendors.col.due"), width: "110px", render: (inv) => formatDate(inv.DueDate) },
     {
       key: "amount",
-      header: "Amount",
+      header: t("vendors.col.amount"),
       align: "right",
       render: (inv) => <span className="tnum font-medium">{formatAmount(invoiceAmount(inv), inv.Currency || "ISK")}</span>,
     },
-    { key: "status", header: "Status", align: "right", render: (inv) => approvalBadge(inv.ApprovalStatus ?? inv.Status) },
+    {
+      key: "status",
+      header: t("vendors.col.status"),
+      align: "right",
+      render: (inv) => approvalBadge(inv.ApprovalStatus ?? inv.Status, t),
+    },
   ];
 }
 
@@ -44,6 +50,7 @@ export default function VendorInvoicesPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const [selectedKind, setSelectedKind] = useState<"processed" | "unprocessed">("processed");
   const prefetch = usePrefetch();
+  const t = useT();
 
   const processed = useDkQuery<VendorInvoice[]>(
     ["vendor-invoices", "processed", "page", page],
@@ -62,7 +69,7 @@ export default function VendorInvoicesPage() {
   );
 
   const active = tab === "processed" ? processed : unprocessed;
-  const columns = invoiceColumns();
+  const columns = invoiceColumns(t);
 
   function openInvoice(inv: VendorInvoice, kind: "processed" | "unprocessed") {
     const id = invoiceId(inv);
@@ -76,8 +83,8 @@ export default function VendorInvoicesPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs
           tabs={[
-            { id: "processed", label: "Processed" },
-            { id: "unprocessed", label: "Unprocessed" },
+            { id: "processed", label: t("vendors.invoices.processed") },
+            { id: "unprocessed", label: t("vendors.invoices.unprocessed") },
           ]}
           active={tab}
           onChange={setTab}
@@ -86,10 +93,10 @@ export default function VendorInvoicesPage() {
           {tab === "unprocessed" && (
             <span className="flex items-center gap-1.5 text-xs text-fog">
               <TriangleAlert className="size-3.5 text-amber" />
-              Heavy endpoint — summary columns only
+              {t("vendors.invoices.heavyWarning")}
             </span>
           )}
-          <Button variant="ghost" size="sm" onClick={() => active.refetch()} aria-label="Refresh invoices">
+          <Button variant="ghost" size="sm" onClick={() => active.refetch()} aria-label={t("vendors.invoices.refreshAria")}>
             <RefreshCw className={active.isFetching ? "size-4 animate-spin" : "size-4"} />
           </Button>
         </div>
@@ -104,8 +111,8 @@ export default function VendorInvoicesPage() {
             loading={processed.isLoading || (processed.isFetching && !processed.data)}
             error={processed.error}
             onRetry={processed.refetch}
-            emptyTitle="No processed invoices"
-            emptyBody="Processed vendor invoices will appear here once they have been posted."
+            emptyTitle={t("vendors.invoices.processedEmptyTitle")}
+            emptyBody={t("vendors.invoices.processedEmptyBody")}
             onRowClick={(inv) => openInvoice(inv, "processed")}
             onRowHover={(inv) => {
               const id = invoiceId(inv);
@@ -128,8 +135,8 @@ export default function VendorInvoicesPage() {
             loading={unprocessed.isLoading || (unprocessed.isFetching && !unprocessed.data)}
             error={unprocessed.error}
             onRetry={unprocessed.refetch}
-            emptyTitle="No unprocessed invoices"
-            emptyBody="Incoming vendor invoices awaiting processing will appear here."
+            emptyTitle={t("vendors.invoices.unprocessedEmptyTitle")}
+            emptyBody={t("vendors.invoices.unprocessedEmptyBody")}
             onRowClick={(inv) => openInvoice(inv, "unprocessed")}
           />
         </Card>

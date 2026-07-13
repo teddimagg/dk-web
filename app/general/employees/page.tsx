@@ -9,11 +9,13 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Input } from "@/components/ui/Input";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatDate } from "@/lib/format";
 import type { Employee } from "@/lib/api/types/general";
 import { EmployeeFormDialog } from "../_components/EmployeeFormDialog";
 
 export default function EmployeesPage() {
+  const t = useT();
   const router = useRouter();
   const prefetch = usePrefetch();
   const [query, setQuery] = useState("");
@@ -38,43 +40,47 @@ export default function EmployeesPage() {
   const columns: Column<Employee>[] = [
     {
       key: "Number",
-      header: "Number",
+      header: t("general.field.number"),
       render: (e) => <span className="font-mono text-xs text-fog">{e.Number}</span>,
       width: "130px",
     },
     {
       key: "Name",
-      header: "Name",
+      header: t("general.field.name"),
       render: (e) => <span className="font-medium text-ink">{e.Name || "–"}</span>,
     },
-    { key: "Email", header: "Email", render: (e) => e.Email || <span className="text-mist">–</span> },
+    {
+      key: "Email",
+      header: t("general.field.email"),
+      render: (e) => e.Email || <span className="text-mist">–</span>,
+    },
     {
       key: "Phone",
-      header: "Phone",
+      header: t("general.field.phone"),
       render: (e) => (
         <span className="tnum">{e.PhoneMobile || e.Phone || <span className="text-mist">–</span>}</span>
       ),
     },
     {
       key: "Group",
-      header: "Group",
+      header: t("general.field.group"),
       render: (e) => (e.Group ? <Badge tone="neutral">{e.Group}</Badge> : <span className="text-mist">–</span>),
     },
     {
       key: "Status",
-      header: "Status",
+      header: t("general.field.status"),
       render: (e) =>
         e.Status == null ? (
           <span className="text-mist">–</span>
         ) : (
           <Badge tone={e.Status === 0 ? "green" : "neutral"}>
-            {e.Status === 0 ? "Active" : `Status ${e.Status}`}
+            {e.Status === 0 ? t("general.status.active") : t("general.status.other", { status: e.Status })}
           </Badge>
         ),
     },
     {
       key: "Modified",
-      header: "Modified",
+      header: t("general.field.modified"),
       render: (e) => <span className="tnum">{formatDate(e.Modified)}</span>,
       align: "right",
     },
@@ -85,7 +91,7 @@ export default function EmployeesPage() {
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-3 px-5 py-4">
           <CardTitle icon={<Users />} className="mr-auto">
-            Employees
+            {t("general.tabs.employees")}
             {data ? <span className="ml-1.5 tnum text-mist">{rows?.length ?? 0}</span> : null}
           </CardTitle>
           <div className="relative">
@@ -93,16 +99,16 @@ export default function EmployeesPage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search name, number, email…"
+              placeholder={t("general.employees.searchPlaceholder")}
               className="w-64 pl-9"
-              aria-label="Search employees"
+              aria-label={t("general.employees.searchAria")}
             />
           </div>
-          <Button variant="ghost" size="sm" onClick={() => refetch()} aria-label="Refresh employees">
+          <Button variant="ghost" size="sm" onClick={() => refetch()} aria-label={t("ui.refresh")}>
             <RefreshCw className={isFetching ? "size-4 animate-spin" : "size-4"} />
           </Button>
           <Button size="sm" onClick={() => setCreating(true)}>
-            <Plus className="size-4" /> New employee
+            <Plus className="size-4" /> {t("general.employees.new")}
           </Button>
         </div>
         <DataTable<Employee>
@@ -116,16 +122,14 @@ export default function EmployeesPage() {
           onRowHover={(e) =>
             prefetch(["general", "employee", e.Number], `/general/employee/${encodeURIComponent(e.Number)}`)
           }
-          emptyTitle={query ? "No employees match" : "No employees yet"}
+          emptyTitle={query ? t("general.employees.emptyFiltered") : t("general.employees.empty")}
           emptyBody={
-            query
-              ? "Try a different search — the filter runs over number, name, email, group and SSN."
-              : "Create the first employee to get started."
+            query ? t("general.employees.emptyFilteredBody") : t("general.employees.emptyBody")
           }
           emptyAction={
             !query ? (
               <Button size="sm" onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> New employee
+                <Plus className="size-4" /> {t("general.employees.new")}
               </Button>
             ) : undefined
           }

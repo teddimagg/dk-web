@@ -4,36 +4,9 @@ import { FolderKanban } from "lucide-react";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatDate, formatDateTime } from "@/lib/format";
 import type { EmployeeProject } from "@/lib/api/types/general";
-
-const columns: Column<EmployeeProject>[] = [
-  {
-    key: "Number",
-    header: "Project",
-    render: (p) => <span className="font-mono text-xs text-fog">{p.Number}</span>,
-    width: "110px",
-  },
-  { key: "Name", header: "Name", render: (p) => <span className="font-medium text-ink">{p.Name || "–"}</span> },
-  { key: "Group", header: "Group", render: (p) => p.Group || <span className="text-mist">–</span> },
-  {
-    key: "CustomerNameToBill",
-    header: "Customer to bill",
-    render: (p) => p.CustomerNameToBill || <span className="text-mist">–</span>,
-  },
-  {
-    key: "FoundingDate",
-    header: "Founded",
-    render: (p) => <span className="tnum">{formatDate(p.FoundingDate)}</span>,
-    align: "right",
-  },
-  {
-    key: "Modified",
-    header: "Modified",
-    render: (p) => <span className="tnum">{formatDateTime(p.Modified)}</span>,
-    align: "right",
-  },
-];
 
 /**
  * Projects where the employee is registered as worker or supervisor.
@@ -47,18 +20,59 @@ export function ProjectsTable({
   employeeNumber: string;
   role: "worker" | "supervisor";
 }) {
+  const t = useT();
   const { data, isLoading, error, refetch } = useDkQuery<EmployeeProject[]>(
     ["general", "employee", employeeNumber, role],
     `/general/employee/${encodeURIComponent(employeeNumber)}/${role}`,
     { retry: false },
   );
 
+  const columns: Column<EmployeeProject>[] = [
+    {
+      key: "Number",
+      header: t("general.projects.colProject"),
+      render: (p) => <span className="font-mono text-xs text-fog">{p.Number}</span>,
+      width: "110px",
+    },
+    {
+      key: "Name",
+      header: t("general.field.name"),
+      render: (p) => <span className="font-medium text-ink">{p.Name || "–"}</span>,
+    },
+    {
+      key: "Group",
+      header: t("general.field.group"),
+      render: (p) => p.Group || <span className="text-mist">–</span>,
+    },
+    {
+      key: "CustomerNameToBill",
+      header: t("general.projects.colCustomerToBill"),
+      render: (p) => p.CustomerNameToBill || <span className="text-mist">–</span>,
+    },
+    {
+      key: "FoundingDate",
+      header: t("general.projects.colFounded"),
+      render: (p) => <span className="tnum">{formatDate(p.FoundingDate)}</span>,
+      align: "right",
+    },
+    {
+      key: "Modified",
+      header: t("general.field.modified"),
+      render: (p) => <span className="tnum">{formatDateTime(p.Modified)}</span>,
+      align: "right",
+    },
+  ];
+
   if (error && error.status === 404) {
     return (
       <EmptyState
         icon={<FolderKanban />}
-        title={role === "worker" ? "No project worker registrations" : "No supervisor registrations"}
-        body={`This employee is not registered as a project ${role} — the API has no project data for them.`}
+        title={t(role === "worker" ? "general.projects.workerEmpty" : "general.projects.supervisorEmpty")}
+        body={t(
+          role === "worker"
+            ? "general.projects.workerEmptyBody"
+            : "general.projects.supervisorEmptyBody",
+        )}
       />
     );
   }
@@ -71,8 +85,8 @@ export function ProjectsTable({
       loading={isLoading}
       error={error}
       onRetry={() => refetch()}
-      emptyTitle={role === "worker" ? "No project worker registrations" : "No supervisor registrations"}
-      emptyBody="The API returned an empty list for this employee."
+      emptyTitle={t(role === "worker" ? "general.projects.workerEmpty" : "general.projects.supervisorEmpty")}
+      emptyBody={t("general.projects.emptyBody")}
     />
   );
 }

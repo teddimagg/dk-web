@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useDkQuery } from "@/lib/hooks/useDk";
 import { formatDateTime, formatInt, formatNumber } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { Member } from "@/lib/api/types/members";
 import { ApplicationsTab } from "../_components/ApplicationsTab";
 import { FeeDialog } from "../_components/FeeDialog";
@@ -28,21 +29,23 @@ import {
 } from "../_components/RelatedTabs";
 
 const TAB_DEFS = [
-  { id: "applications", label: "Applications" },
-  { id: "fund", label: "Funds" },
-  { id: "membership", label: "Membership" },
-  { id: "subgroups", label: "Subgroups" },
-  { id: "career", label: "Career" },
-  { id: "education", label: "Education" },
+  { id: "applications", labelKey: "members.tabs.applications" },
+  { id: "fund", labelKey: "members.tabs.funds" },
+  { id: "membership", labelKey: "members.tabs.membership" },
+  { id: "subgroups", labelKey: "members.tabs.subgroups" },
+  { id: "career", labelKey: "members.tabs.career" },
+  { id: "education", labelKey: "members.tabs.education" },
 ];
 
-function statusBadges(m: Member) {
+function statusBadges(m: Member, t: ReturnType<typeof useT>) {
   const badges: { key: string; tone: "red" | "ink" | "amber" | "neutral" | "green"; label: string }[] = [];
-  if (m.Status?.Blocked) badges.push({ key: "blocked", tone: "red", label: "Blocked" });
-  if (m.Status?.Dead) badges.push({ key: "dead", tone: "ink", label: "Deceased" });
-  if (m.Status?.Retired) badges.push({ key: "retired", tone: "amber", label: "Retired" });
-  if (m.Status?.Disabled) badges.push({ key: "disabled", tone: "neutral", label: "Disabled" });
-  if (badges.length === 0) badges.push({ key: "active", tone: "green", label: "Active" });
+  if (m.Status?.Blocked) badges.push({ key: "blocked", tone: "red", label: t("members.status.blocked") });
+  if (m.Status?.Dead) badges.push({ key: "dead", tone: "ink", label: t("members.status.deceased") });
+  if (m.Status?.Retired) badges.push({ key: "retired", tone: "amber", label: t("members.status.retired") });
+  if (m.Status?.Disabled)
+    badges.push({ key: "disabled", tone: "neutral", label: t("members.status.disabled") });
+  if (badges.length === 0)
+    badges.push({ key: "active", tone: "green", label: t("members.status.active") });
   return badges.map((b) => (
     <Badge key={b.key} tone={b.tone}>
       {b.label}
@@ -50,13 +53,8 @@ function statusBadges(m: Member) {
   ));
 }
 
-function genderLabel(g: number | undefined): string | undefined {
-  if (g === 1) return "Male";
-  if (g === 2) return "Female";
-  return undefined;
-}
-
 export default function MemberDetailPage() {
+  const t = useT();
   const params = useParams<{ number: string }>();
   const number = decodeURIComponent(params.number);
   const [tab, setTab] = useState("applications");
@@ -76,7 +74,7 @@ export default function MemberDetailPage() {
       <div className="flex flex-wrap items-center gap-3">
         <Link
           href="/members"
-          aria-label="Back to members"
+          aria-label={t("members.detail.backAria")}
           className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-line bg-white text-fog shadow-card transition-colors hover:text-ink"
         >
           <ArrowLeft className="size-4" />
@@ -86,9 +84,9 @@ export default function MemberDetailPage() {
             {member?.Name || number}
           </h2>
           <p className="mt-0.5 text-[13px] text-fog tnum">
-            Member № {member?.Number ?? number}
+            {t("members.detail.memberNo", { number: member?.Number ?? number })}
             {member?.SSNumber && member.SSNumber !== member.Number
-              ? ` · SSN ${member.SSNumber}`
+              ? ` · ${t("members.detail.ssnInline", { ssn: member.SSNumber })}`
               : ""}
           </p>
         </div>
@@ -97,15 +95,15 @@ export default function MemberDetailPage() {
             variant="ghost"
             size="sm"
             onClick={() => refetch()}
-            aria-label="Refresh member"
+            aria-label={t("members.detail.refreshAria")}
           >
             <RefreshCw className={clsx("size-4", isFetching && "animate-spin")} />
           </Button>
           <Button variant="secondary" size="sm" onClick={() => setFeeOpen(true)}>
-            <Banknote className="size-4" /> Create fee
+            <Banknote className="size-4" /> {t("members.detail.createFee")}
           </Button>
           <Button size="sm" onClick={() => setEditOpen(true)} disabled={!member}>
-            <Pencil className="size-4" /> Edit
+            <Pencil className="size-4" /> {t("members.detail.edit")}
           </Button>
         </div>
       </div>
@@ -132,75 +130,83 @@ export default function MemberDetailPage() {
       {member && (
         <div className="grid gap-6 lg:grid-cols-2">
           <Card className="space-y-5 p-6">
-            <CardTitle icon={<IdCard />} action={<span className="flex gap-1.5">{statusBadges(member)}</span>}>
-              Member card
+            <CardTitle icon={<IdCard />} action={<span className="flex gap-1.5">{statusBadges(member, t)}</span>}>
+              {t("members.detail.cardTitle")}
             </CardTitle>
             <KV
               items={[
-                { label: "Number", value: member.Number },
-                { label: "SSN", value: member.SSNumber },
-                { label: "Group", value: member.Group },
-                { label: "Tag", value: member.Tag },
-                { label: "Salesperson", value: member.SalesPerson },
-                { label: "Ledger code", value: member.LedgerCode },
-                { label: "Payment type", value: member.PaymentType },
-                { label: "Payment mode", value: member.PaymentMode },
-                { label: "Currency", value: member.CurrencyCode },
+                { label: t("members.field.number"), value: member.Number },
+                { label: t("members.field.ssn"), value: member.SSNumber },
+                { label: t("members.field.group"), value: member.Group },
+                { label: t("members.field.tag"), value: member.Tag },
+                { label: t("members.field.salesperson"), value: member.SalesPerson },
+                { label: t("members.field.ledgerCode"), value: member.LedgerCode },
+                { label: t("members.field.paymentType"), value: member.PaymentType },
+                { label: t("members.field.paymentMode"), value: member.PaymentMode },
+                { label: t("members.field.currency"), value: member.CurrencyCode },
                 {
-                  label: "Discount",
+                  label: t("members.field.discount"),
                   value: member.Discount ? formatNumber(member.Discount) : undefined,
                 },
-                { label: "Points", value: formatInt(member.Points) },
-                { label: "No VAT", value: member.NoVat ? "Yes" : "No" },
-                { label: "Gender", value: genderLabel(member.Gender) },
+                { label: t("members.field.points"), value: formatInt(member.Points) },
+                { label: t("members.field.noVat"), value: member.NoVat ? t("members.yes") : t("members.no") },
                 {
-                  label: "Member age",
+                  label: t("members.field.gender"),
+                  value:
+                    member.Gender === 1
+                      ? t("members.gender.male")
+                      : member.Gender === 2
+                        ? t("members.gender.female")
+                        : undefined,
+                },
+                {
+                  label: t("members.field.memberAge"),
                   value:
                     member.Statistics?.MemberAge != null
-                      ? `${formatNumber(member.Statistics.MemberAge)} yrs`
+                      ? t("members.detail.years", { n: formatNumber(member.Statistics.MemberAge) })
                       : undefined,
                 },
                 {
-                  label: "Career age",
+                  label: t("members.field.careerAge"),
                   value:
                     member.Statistics?.CareerAge != null
-                      ? `${formatNumber(member.Statistics.CareerAge)} yrs`
+                      ? t("members.detail.years", { n: formatNumber(member.Statistics.CareerAge) })
                       : undefined,
                 },
                 {
-                  label: "Confirmed terms",
+                  label: t("members.field.confirmedTerms"),
                   value: member.HasConfirmedTerms
-                    ? `Yes${member.ConfirmedTermId ? ` (#${member.ConfirmedTermId})` : ""}`
-                    : "No",
+                    ? `${t("members.yes")}${member.ConfirmedTermId ? ` (#${member.ConfirmedTermId})` : ""}`
+                    : t("members.no"),
                 },
-                { label: "Created", value: formatDateTime(member.Created) },
-                { label: "Modified", value: formatDateTime(member.Modified) },
+                { label: t("members.field.created"), value: formatDateTime(member.Created) },
+                { label: t("members.field.modified"), value: formatDateTime(member.Modified) },
               ]}
             />
           </Card>
 
           <Card className="space-y-5 p-6">
-            <CardTitle icon={<UserRound />}>Contact &amp; address</CardTitle>
+            <CardTitle icon={<UserRound />}>{t("members.detail.contactTitle")}</CardTitle>
             <KV
               items={[
-                { label: "Address", value: member.Address?.Address1 },
-                { label: "Address 2", value: member.Address?.Address2 },
-                { label: "Address 3", value: member.Address?.Address3 },
-                { label: "Address 4", value: member.Address?.Address4 },
+                { label: t("members.field.address"), value: member.Address?.Address1 },
+                { label: t("members.field.address2"), value: member.Address?.Address2 },
+                { label: t("members.field.address3"), value: member.Address?.Address3 },
+                { label: t("members.field.address4"), value: member.Address?.Address4 },
                 {
-                  label: "Zip / city",
+                  label: t("members.field.zipCity"),
                   value: [member.Address?.ZipCode, member.Address?.City].filter(Boolean).join(" "),
                 },
                 {
-                  label: "Country",
+                  label: t("members.field.country"),
                   value: member.Address?.CountryName || member.Address?.CountryCode,
                 },
-                { label: "Phone", value: member.ContactDetail?.Phone },
-                { label: "Mobile", value: member.ContactDetail?.Mobile },
-                { label: "Direct", value: member.ContactDetail?.Direct },
-                { label: "Fax", value: member.ContactDetail?.Fax },
-                { label: "Email", value: member.ContactDetail?.Email },
-                { label: "URL", value: member.ContactDetail?.URL },
+                { label: t("members.field.phone"), value: member.ContactDetail?.Phone },
+                { label: t("members.field.mobile"), value: member.ContactDetail?.Mobile },
+                { label: t("members.field.direct"), value: member.ContactDetail?.Direct },
+                { label: t("members.field.fax"), value: member.ContactDetail?.Fax },
+                { label: t("members.field.email"), value: member.ContactDetail?.Email },
+                { label: t("members.field.url"), value: member.ContactDetail?.URL },
               ]}
             />
           </Card>
@@ -208,7 +214,11 @@ export default function MemberDetailPage() {
       )}
 
       <div className="space-y-4">
-        <Tabs tabs={TAB_DEFS} active={tab} onChange={setTab} />
+        <Tabs
+          tabs={TAB_DEFS.map((d) => ({ id: d.id, label: t(d.labelKey) }))}
+          active={tab}
+          onChange={setTab}
+        />
         <Card className="overflow-hidden">
           {tab === "applications" && <ApplicationsTab number={number} />}
           {tab === "fund" && <FundTab number={number} />}
@@ -219,7 +229,7 @@ export default function MemberDetailPage() {
         </Card>
       </div>
 
-      {member && <JsonView data={member} label="Raw member payload" />}
+      {member && <JsonView data={member} />}
 
       {member && (
         <MemberFormDialog open={editOpen} onClose={() => setEditOpen(false)} member={member} />

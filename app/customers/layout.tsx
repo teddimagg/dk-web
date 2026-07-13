@@ -1,19 +1,21 @@
 "use client";
 
-import { NavTabs } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ModuleFrame } from "@/components/shell/ModuleFrame";
+import { useT } from "@/lib/i18n";
 
 export default function CustomersLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="Customers module" title="Customers" />
-      <NavTabs
-        tabs={[
-          { href: "/customers", label: "All customers", exact: true },
-          { href: "/customers/groups", label: "Groups" },
-        ]}
-      />
+    <ModuleFrame
+      href="/customers"
+      title={t("customers.title")}
+      intro={t("customers.intro")}
+      tabs={[
+        { href: "/customers", label: t("customers.tabs.all"), exact: true },
+        { href: "/customers/groups", label: t("customers.tabs.groups") },
+      ]}
+    >
       {children}
-    </div>
+    </ModuleFrame>
   );
 }

@@ -10,7 +10,7 @@ import { SplitBar } from "@/components/ui/charts";
 import { Button } from "@/components/ui/Button";
 import { PeriodPicker } from "@/components/shell/PeriodPicker";
 import { useActiveCompany } from "@/lib/stores/companies";
-import { usePeriod, periodLabel } from "@/lib/stores/period";
+import { usePeriod, usePeriodLabel } from "@/lib/stores/period";
 import { usePeriodInvoices } from "@/lib/hooks/usePeriodInvoices";
 import { formatAmount, formatCompact, formatDate, formatInt, formatPercent } from "@/lib/format";
 import { useT } from "@/lib/i18n";
@@ -108,6 +108,7 @@ export default function AnalyticsPage() {
   const company = useActiveCompany();
   const { period, setPeriod } = usePeriod();
   const t = useT();
+  const pl = usePeriodLabel();
   const locale = useLocale((s) => s.locale);
 
   // Every invoice of the period, all pages (shared with Overview).
@@ -185,7 +186,7 @@ export default function AnalyticsPage() {
     <div className="space-y-6">
       <PageHeader eyebrow={t("overview.eyebrow", { company: company?.name ?? "…" })} title={t("analytics.title")}>
         <p className="mt-2 text-sm text-fog">
-          {t("analytics.subtitle", { period: periodLabel(period) })}
+          {t("analytics.subtitle", { period: pl(period) })}
           {agg ? ` · ${formatDate(agg.span.from)} – ${formatDate(agg.span.to)}` : ""}.
         </p>
       </PageHeader>
@@ -209,7 +210,7 @@ export default function AnalyticsPage() {
       ) : inv && inv.length === 0 ? (
         <Card>
           <EmptyState
-            title={t("analytics.emptyTitle", { period: periodLabel(period) })}
+            title={t("analytics.emptyTitle", { period: pl(period) })}
             body={t("analytics.emptyBody")}
             action={
               <Button variant="secondary" size="sm" onClick={() => setPeriod({ mode: "all" })}>

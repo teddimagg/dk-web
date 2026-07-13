@@ -11,6 +11,7 @@ import { JsonView } from "@/components/ui/JsonView";
 import { KV } from "@/components/ui/KV";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { PaymentItem } from "@/lib/api/types/general";
 import { recordKvItems } from "./RecordsTable";
 
@@ -33,6 +34,7 @@ export function PaymentLookupCard({
   singular: string;
   icon: ReactNode;
 }) {
+  const t = useT();
   const base = `/general/payment/${kind}`;
   const prefetch = usePrefetch();
   const [selected, setSelected] = useState<string | null>(null);
@@ -47,13 +49,13 @@ export function PaymentLookupCard({
   const columns: Column<PaymentItem>[] = [
     {
       key: "id",
-      header: "Code",
+      header: t("general.field.code"),
       render: (r) => <span className="font-mono text-xs text-fog">{itemId(r) || "–"}</span>,
       width: "110px",
     },
     {
       key: "Description",
-      header: "Description",
+      header: t("general.field.description"),
       render: (r) => (
         <span className="font-medium text-ink">{typeof r.Description === "string" && r.Description ? r.Description : "–"}</span>
       ),
@@ -71,7 +73,7 @@ export function PaymentLookupCard({
           variant="ghost"
           size="sm"
           onClick={() => list.refetch()}
-          aria-label={`Refresh ${title.toLowerCase()}`}
+          aria-label={t("ui.refresh")}
         >
           <RefreshCw className={list.isFetching ? "size-4 animate-spin" : "size-4"} />
         </Button>
@@ -91,8 +93,8 @@ export function PaymentLookupCard({
           const id = itemId(r);
           if (id) prefetch(["general", "payment", kind, id], `${base}/${encodeURIComponent(id)}`);
         }}
-        emptyTitle={`No ${title.toLowerCase()}`}
-        emptyBody="The API returned an empty list."
+        emptyTitle={t(kind === "mode" ? "general.payments.emptyModes" : "general.payments.emptyTerms")}
+        emptyBody={t("general.payments.emptyBody")}
       />
 
       <Dialog

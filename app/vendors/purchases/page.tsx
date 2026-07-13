@@ -10,6 +10,7 @@ import { Card, CardTitle } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatDate, formatInt } from "@/lib/format";
 import type { PurchaseOrder } from "@/lib/api/types/vendors";
 import { asArray, isoDaysAgo, purchaseId, purchaseVendorLabel } from "../_components/helpers";
@@ -25,6 +26,7 @@ interface Lookup {
 export default function PurchasesPage() {
   const router = useRouter();
   const prefetch = usePrefetch();
+  const t = useT();
   const [modifiedSince, setModifiedSince] = useState(() => isoDaysAgo(30));
   const [lookupMode, setLookupMode] = useState<LookupMode>("number");
   const [lookupValue, setLookupValue] = useState("");
@@ -51,6 +53,7 @@ export default function PurchasesPage() {
       ? undefined // keep DataTable in its skeleton state while the lookup is in flight
       : asArray(lookupQuery.data)
     : (modifiedQuery.data ?? undefined);
+  const count = rows?.length ?? 0;
 
   function runLookup(e: React.FormEvent) {
     e.preventDefault();
@@ -67,24 +70,24 @@ export default function PurchasesPage() {
   const columns: Column<PurchaseOrder>[] = [
     {
       key: "id",
-      header: "ID",
+      header: t("vendors.col.id"),
       width: "90px",
       render: (o) => <span className="font-mono text-xs text-fog">{purchaseId(o) ?? "–"}</span>,
     },
-    { key: "number", header: "Number", render: (o) => <span className="font-medium">{o.Number ?? "–"}</span> },
-    { key: "reference", header: "Reference", render: (o) => o.Reference ?? "–" },
-    { key: "vendor", header: "Vendor", render: (o) => purchaseVendorLabel(o) },
-    { key: "ordered", header: "Order date", width: "110px", render: (o) => formatDate(o.OrderDate ?? o.Created) },
-    { key: "modified", header: "Modified", width: "110px", render: (o) => formatDate(o.Modified) },
+    { key: "number", header: t("vendors.col.number"), render: (o) => <span className="font-medium">{o.Number ?? "–"}</span> },
+    { key: "reference", header: t("vendors.col.reference"), render: (o) => o.Reference ?? "–" },
+    { key: "vendor", header: t("vendors.col.vendor"), render: (o) => purchaseVendorLabel(o) },
+    { key: "ordered", header: t("vendors.col.orderDate"), width: "110px", render: (o) => formatDate(o.OrderDate ?? o.Created) },
+    { key: "modified", header: t("vendors.field.modified"), width: "110px", render: (o) => formatDate(o.Modified) },
     {
       key: "lines",
-      header: "Lines",
+      header: t("vendors.col.lines"),
       align: "right",
       render: (o) => <span className="tnum">{o.Lines ? formatInt(o.Lines.length) : "–"}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: t("vendors.col.status"),
       align: "right",
       render: (o) => (o.Status != null && o.Status !== "" ? <Badge tone="blue">{String(o.Status)}</Badge> : "–"),
     },
@@ -96,29 +99,44 @@ export default function PurchasesPage() {
         <CardTitle icon={<Search />} className="mb-4" action={
           lookup && (
             <Button variant="ghost" size="sm" onClick={() => setLookup(null)}>
-              <X className="size-4" /> Clear lookup
+              <X className="size-4" /> {t("vendors.purchases.clearLookup")}
             </Button>
           )
         }>
-          Find a purchase order
+          {t("vendors.purchases.findTitle")}
         </CardTitle>
         <form onSubmit={runLookup} className="flex flex-wrap items-end gap-3">
-          <Field label="Look up by" className="w-44">
+          <Field label={t("vendors.purchases.lookupBy")} className="w-44">
             <Select value={lookupMode} onChange={(e) => setLookupMode(e.target.value as LookupMode)}>
-              <option value="number">Order number</option>
-              <option value="reference">Reference</option>
-              <option value="id">Record ID</option>
+              <option value="number">{t("vendors.purchases.orderNumber")}</option>
+              <option value="reference">{t("vendors.col.reference")}</option>
+              <option value="id">{t("vendors.purchases.recordId")}</option>
             </Select>
           </Field>
-          <Field label={lookupMode === "id" ? "Record ID" : lookupMode === "number" ? "Order number" : "Reference"} className="w-56">
+          <Field
+            label={
+              lookupMode === "id"
+                ? t("vendors.purchases.recordId")
+                : lookupMode === "number"
+                  ? t("vendors.purchases.orderNumber")
+                  : t("vendors.col.reference")
+            }
+            className="w-56"
+          >
             <Input
               value={lookupValue}
               onChange={(e) => setLookupValue(e.target.value)}
-              placeholder={lookupMode === "id" ? "e.g. 3" : lookupMode === "number" ? "e.g. 100045" : "e.g. ABCD1234"}
+              placeholder={
+                lookupMode === "id"
+                  ? t("vendors.purchases.egId")
+                  : lookupMode === "number"
+                    ? t("vendors.purchases.egNumber")
+                    : t("vendors.purchases.egReference")
+              }
             />
           </Field>
           <Button type="submit" variant="secondary" disabled={!lookupValue.trim()}>
-            <Search className="size-4" /> {lookupMode === "id" ? "Open order" : "Look up"}
+            <Search className="size-4" /> {lookupMode === "id" ? t("vendors.purchases.openOrder") : t("vendors.purchases.lookup")}
           </Button>
         </form>
       </Card>
@@ -127,25 +145,27 @@ export default function PurchasesPage() {
         <div className="flex flex-wrap items-end gap-3 border-b border-line px-4 py-3">
           {lookup ? (
             <p className="text-sm text-fog">
-              Lookup results for {lookup.mode === "number" ? "order number" : "reference"}{" "}
+              {lookup.mode === "number"
+                ? t("vendors.purchases.lookupResultsNumber")
+                : t("vendors.purchases.lookupResultsReference")}{" "}
               <span className="font-medium text-ink">{lookup.value}</span>
             </p>
           ) : (
-            <Field label="Modified after" className="w-48">
+            <Field label={t("vendors.purchases.modifiedAfter")} className="w-48">
               <Input
                 type="date"
                 value={modifiedSince}
                 onChange={(e) => setModifiedSince(e.target.value)}
-                aria-label="Show orders modified after"
+                aria-label={t("vendors.purchases.modifiedAfterAria")}
               />
             </Field>
           )}
           <div className="ml-auto flex items-center gap-2 pb-0.5">
-            <Button variant="ghost" size="sm" onClick={() => activeQuery.refetch()} aria-label="Refresh orders">
+            <Button variant="ghost" size="sm" onClick={() => activeQuery.refetch()} aria-label={t("vendors.purchases.refreshAria")}>
               <RefreshCw className={activeQuery.isFetching ? "size-4 animate-spin" : "size-4"} />
             </Button>
             <Button size="sm" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> New purchase order
+              <Plus className="size-4" /> {t("vendors.purchases.new")}
             </Button>
           </div>
         </div>
@@ -157,11 +177,11 @@ export default function PurchasesPage() {
           loading={activeQuery.isLoading || (activeQuery.isFetching && !rows)}
           error={activeQuery.error}
           onRetry={activeQuery.refetch}
-          emptyTitle={lookup ? "No matching orders" : "No purchase orders"}
+          emptyTitle={lookup ? t("vendors.purchases.lookupEmptyTitle") : t("vendors.purchases.emptyTitle")}
           emptyBody={
             lookup
-              ? "Nothing matched that lookup — try another value or clear the lookup."
-              : `No purchase orders were created or modified after ${formatDate(modifiedSince)}. Move the date back to see older orders.`
+              ? t("vendors.purchases.lookupEmptyBody")
+              : t("vendors.purchases.emptyBody", { date: formatDate(modifiedSince) })
           }
           onRowClick={(o) => {
             const id = purchaseId(o);
@@ -173,7 +193,7 @@ export default function PurchasesPage() {
           }}
           footer={
             <div className="border-t border-line px-4 py-3 text-[13px] text-fog tnum">
-              {rows?.length ?? 0} order{(rows?.length ?? 0) === 1 ? "" : "s"}
+              {t(count === 1 ? "vendors.purchases.count1" : "vendors.purchases.countN", { n: count })}
             </div>
           }
         />

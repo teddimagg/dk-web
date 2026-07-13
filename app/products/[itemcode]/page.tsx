@@ -14,6 +14,7 @@ import { KV } from "@/components/ui/KV";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatDateTime, formatNumber, formatPercent, timeAgo } from "@/lib/format";
 import type { Product, ProductWarehouseStock } from "@/lib/api/types/products";
 import { AttachmentsTab } from "../_components/AttachmentsTab";
@@ -27,6 +28,7 @@ export default function ProductDetailPage() {
   const itemcode = decodeURIComponent(params.itemcode);
   const enc = encodeURIComponent(itemcode);
   const router = useRouter();
+  const t = useT();
 
   const [tab, setTab] = useState("barcodes");
   const [editOpen, setEditOpen] = useState(false);
@@ -44,41 +46,45 @@ export default function ProductDetailPage() {
   const whColumns: Column<ProductWarehouseStock>[] = [
     {
       key: "wh",
-      header: "Warehouse",
+      header: t("products.warehouse"),
       render: (w) => <span className="font-medium uppercase">{w.Warehouse || "–"}</span>,
     },
     {
       key: "qty",
-      header: "In stock",
+      header: t("products.inStock"),
       align: "right",
       render: (w) => <span className="tnum font-medium">{formatNumber(w.QuantityInStock)}</span>,
     },
     {
       key: "back",
-      header: "Back orders",
+      header: t("products.backOrders"),
       align: "right",
       render: (w) => <span className="tnum">{formatNumber(w.QuantityOnBackOrders)}</span>,
     },
     {
       key: "po",
-      header: "On PO",
+      header: t("products.onPo"),
       align: "right",
       render: (w) => <span className="tnum">{formatNumber(w.QuantityPoOrders)}</span>,
     },
     {
       key: "min",
-      header: "Min",
+      header: t("products.min"),
       align: "right",
       render: (w) => <span className="tnum">{formatNumber(w.MinimumStock)}</span>,
     },
     {
       key: "max",
-      header: "Max",
+      header: t("products.max"),
       align: "right",
       render: (w) => <span className="tnum">{formatNumber(w.MaximumStock)}</span>,
     },
-    { key: "loc", header: "Location", render: (w) => w.LocationInWarehouse || "–" },
-    { key: "mod", header: "Modified", render: (w) => <span className="text-fog">{timeAgo(w.Modified)}</span> },
+    { key: "loc", header: t("products.location"), render: (w) => w.LocationInWarehouse || "–" },
+    {
+      key: "mod",
+      header: t("products.modifiedAt"),
+      render: (w) => <span className="text-fog">{timeAgo(w.Modified)}</span>,
+    },
   ];
 
   return (
@@ -88,7 +94,7 @@ export default function ProductDetailPage() {
           <Button
             variant="ghost"
             size="sm"
-            aria-label="Back to catalogue"
+            aria-label={t("products.backToCatalogue")}
             onClick={() => router.push("/products")}
           >
             <ArrowLeft className="size-4" />
@@ -98,7 +104,7 @@ export default function ProductDetailPage() {
               <h2 className="text-2xl font-semibold tracking-tight text-ink">
                 {product?.Description?.trim() || itemcode}
               </h2>
-              {product?.Inactive && <Badge tone="red">Inactive</Badge>}
+              {product?.Inactive && <Badge tone="red">{t("products.inactive")}</Badge>}
               {product?.Group && <Badge>{product.Group}</Badge>}
             </div>
             <p className="mt-0.5 font-mono text-[13px] text-fog">{itemcode}</p>
@@ -106,10 +112,10 @@ export default function ProductDetailPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" size="sm" onClick={() => refetch()}>
-            <RefreshCw className={clsx("size-4", isFetching && "animate-spin")} /> Refresh
+            <RefreshCw className={clsx("size-4", isFetching && "animate-spin")} /> {t("ui.refresh")}
           </Button>
           <Button size="sm" onClick={() => setEditOpen(true)} disabled={!product}>
-            <Pencil className="size-4" /> Edit
+            <Pencil className="size-4" /> {t("products.edit")}
           </Button>
         </div>
       </div>
@@ -133,58 +139,62 @@ export default function ProductDetailPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="p-6">
               <CardTitle icon={<Package />} className="mb-5">
-                Overview
+                {t("products.overviewCard")}
               </CardTitle>
               <KV
                 columns={1}
                 items={[
-                  { label: "Item code", value: <span className="font-mono">{product.ItemCode}</span> },
-                  { label: "Description", value: product.Description },
-                  { label: "Description 2", value: product.Description2 },
-                  { label: "Alias", value: product.AliasItemCode },
-                  { label: "Group", value: product.Group },
-                  { label: "Unit", value: product.UnitCode },
+                  { label: t("products.itemCode"), value: <span className="font-mono">{product.ItemCode}</span> },
+                  { label: t("products.description"), value: product.Description },
+                  { label: t("products.description2"), value: product.Description2 },
+                  { label: t("products.alias"), value: product.AliasItemCode },
+                  { label: t("products.group"), value: product.Group },
+                  { label: t("products.unit"), value: product.UnitCode },
                   {
-                    label: "Status",
-                    value: product.Inactive ? <Badge tone="red">Inactive</Badge> : <Badge tone="green">Active</Badge>,
+                    label: t("products.status"),
+                    value: product.Inactive ? (
+                      <Badge tone="red">{t("products.inactive")}</Badge>
+                    ) : (
+                      <Badge tone="green">{t("products.active")}</Badge>
+                    ),
                   },
-                  { label: "In web shop", value: product.ShowItemInWebShop ? "Yes" : "No" },
-                  { label: "Created", value: formatDateTime(product.RecordCreated) },
-                  { label: "Modified", value: formatDateTime(product.RecordModified) },
+                  { label: t("products.inWebShop"), value: product.ShowItemInWebShop ? t("products.yes") : t("products.no") },
+                  { label: t("products.createdAt"), value: formatDateTime(product.RecordCreated) },
+                  { label: t("products.modifiedAt"), value: formatDateTime(product.RecordModified) },
                 ]}
               />
             </Card>
             <Card className="p-6">
               <CardTitle icon={<Coins />} className="mb-5">
-                Pricing
+                {t("products.pricing")}
               </CardTitle>
               <KV
                 columns={1}
                 items={[
-                  { label: "Unit price 1", value: formatAmount(product.UnitPrice1, currency) },
-                  { label: "Unit price 1 (incl. tax)", value: formatAmount(product.UnitPrice1WithTax, currency) },
+                  { label: t("products.unitPrice1"), value: formatAmount(product.UnitPrice1, currency) },
+                  { label: t("products.unitPrice1WithTax"), value: formatAmount(product.UnitPrice1WithTax, currency) },
                   {
-                    label: "Unit price 2",
+                    label: t("products.unitPrice2"),
                     value: product.UnitPrice2 ? formatAmount(product.UnitPrice2, currency) : "",
                   },
                   {
-                    label: "Unit price 3",
+                    label: t("products.unitPrice3"),
                     value: product.UnitPrice3 ? formatAmount(product.UnitPrice3, currency) : "",
                   },
                   {
-                    label: "Purchase price",
+                    label: t("products.purchasePrice"),
                     value: product.PurchasePrice ? formatAmount(product.PurchasePrice, currency) : "",
                   },
                   {
-                    label: "Cost price",
+                    label: t("products.costPrice"),
                     value: product.CostPrice ? formatAmount(product.CostPrice, currency) : "",
                   },
-                  { label: "Tax", value: formatPercent(product.TaxPercent, 0) },
+                  { label: t("products.tax"), value: formatPercent(product.TaxPercent, 0) },
                   {
-                    label: "Profit ratio",
+                    label: t("products.profitRatio"),
                     value: product.ProfitRatio1 ? formatPercent(product.ProfitRatio1) : "",
                   },
-                  { label: "Discount allowed", value: product.AllowDiscount ? "Yes" : "No" },
+                  { label: t("products.discountAllowed"), value: product.AllowDiscount ? t("products.yes") : t("products.no") },
                 ]}
               />
             </Card>
@@ -196,18 +206,18 @@ export default function ProductDetailPage() {
               className="mb-4"
               action={
                 <span className="text-[13px] text-fog tnum">
-                  Total in stock: {formatNumber(product.TotalQuantityInWarehouse)}
+                  {t("products.totalInStock", { n: formatNumber(product.TotalQuantityInWarehouse) })}
                 </span>
               }
             >
-              Warehouse stock
+              {t("products.warehouseStock")}
             </CardTitle>
             <DataTable
               columns={whColumns}
               rows={product.Warehouses ?? []}
               rowKey={(w, i) => w.Warehouse ?? i}
-              emptyTitle="No warehouse records"
-              emptyBody="This product is not stocked in any warehouse."
+              emptyTitle={t("products.noWarehouses")}
+              emptyBody={t("products.noWarehousesBody")}
             />
           </Card>
 
@@ -216,10 +226,10 @@ export default function ProductDetailPage() {
               active={tab}
               onChange={setTab}
               tabs={[
-                { id: "barcodes", label: "Barcodes" },
-                { id: "transactions", label: "Transactions" },
-                { id: "vendors", label: "Vendor links" },
-                { id: "attachments", label: "Attachments", count: product.Attachments?.length || undefined },
+                { id: "barcodes", label: t("products.tab.barcodes") },
+                { id: "transactions", label: t("products.tab.transactions") },
+                { id: "vendors", label: t("products.tab.vendors") },
+                { id: "attachments", label: t("products.tab.attachments"), count: product.Attachments?.length || undefined },
               ]}
             />
             <div className="mt-5">
@@ -229,8 +239,8 @@ export default function ProductDetailPage() {
                   pathFor={(p, c) => `/product/${enc}/transaction/${p}/${c}`}
                   queryKey={["product", itemcode, "transactions"]}
                   showItemCode={false}
-                  emptyTitle="No transactions"
-                  emptyBody="Inventory and sales movements for this product will appear here."
+                  emptyTitle={t("products.noTransactions")}
+                  emptyBody={t("products.noTransactionsProductBody")}
                 />
               )}
               {tab === "vendors" && <VendorLinksTab itemcode={itemcode} />}

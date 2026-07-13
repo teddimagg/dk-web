@@ -9,12 +9,14 @@ import { ConfirmDialog } from "@/components/ui/Dialog";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation, useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { WebhookBody, WebhookSubscription } from "@/lib/api/types/platform";
 import { WebhookFormDialog } from "./_components/WebhookFormDialog";
 
 const EVENT_KEYS = ["Product", "Customer", "Vendor", "Project"] as const;
 
 export default function WebhooksPage() {
+  const t = useT();
   const toast = useToast();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<WebhookSubscription | null>(null);
@@ -49,11 +51,11 @@ export default function WebhooksPage() {
       { path: "/admin/webhook/action/test", method: "POST", body },
       {
         onSuccess: () => {
-          toast.success("Test event sent", `dk posted a test delivery to ${hook.Url}.`);
+          toast.success(t("webhooks.toast.testSent"), t("webhooks.toast.testSentDetail", { url: hook.Url ?? "" }));
           setTestingId(null);
         },
         onError: (e) => {
-          toast.error("Test delivery failed", e.message);
+          toast.error(t("webhooks.toast.testFailed"), e.message);
           setTestingId(null);
         },
       },
@@ -63,24 +65,24 @@ export default function WebhooksPage() {
   const columns: Column<WebhookSubscription>[] = [
     {
       key: "description",
-      header: "Description",
+      header: t("webhooks.col.description"),
       render: (h) => (
         <div>
-          <p className="font-medium text-ink">{h.Description ?? "Untitled subscription"}</p>
+          <p className="font-medium text-ink">{h.Description ?? t("webhooks.untitled")}</p>
           <p className="max-w-64 truncate font-mono text-xs text-fog">{h.Url ?? "–"}</p>
         </div>
       ),
     },
     {
       key: "events",
-      header: "Events",
+      header: t("webhooks.col.events"),
       render: (h) => {
         const active = EVENT_KEYS.filter((k) => h.Options?.[k]);
         return active.length > 0 ? (
           <div className="flex flex-wrap gap-1">
             {active.map((k) => (
               <Badge key={k} tone="blue">
-                {k}
+                {t(`webhooks.event.${k.toLowerCase()}`)}
               </Badge>
             ))}
           </div>
@@ -91,19 +93,23 @@ export default function WebhooksPage() {
     },
     {
       key: "auth",
-      header: "Auth",
+      header: t("webhooks.col.auth"),
       render: (h) =>
         h.AuthorizationScheme ? (
           <Badge tone="ink">{h.AuthorizationScheme}</Badge>
         ) : (
-          <span className="text-fog">None</span>
+          <span className="text-fog">{t("webhooks.authNone")}</span>
         ),
     },
     {
       key: "status",
-      header: "Status",
+      header: t("webhooks.col.status"),
       render: (h) =>
-        h.Options?.Enabled ? <Badge tone="green">Enabled</Badge> : <Badge tone="neutral">Disabled</Badge>,
+        h.Options?.Enabled ? (
+          <Badge tone="green">{t("webhooks.enabled")}</Badge>
+        ) : (
+          <Badge tone="neutral">{t("webhooks.disabled")}</Badge>
+        ),
     },
     {
       key: "actions",
@@ -114,8 +120,8 @@ export default function WebhooksPage() {
           <Button
             variant="ghost"
             size="sm"
-            aria-label={`Send test event to ${h.Url}`}
-            title="Send test event"
+            aria-label={t("webhooks.sendTestTo", { url: h.Url ?? "" })}
+            title={t("webhooks.sendTest")}
             loading={testingId === h.ID && test.isPending}
             onClick={() => sendTest(h)}
           >
@@ -124,8 +130,8 @@ export default function WebhooksPage() {
           <Button
             variant="ghost"
             size="sm"
-            aria-label={`Edit ${h.Description ?? h.ID}`}
-            title="Manage subscription"
+            aria-label={t("webhooks.editAria", { name: h.Description ?? h.ID })}
+            title={t("webhooks.manage")}
             onClick={() => setEditing(h)}
           >
             <Pencil className="size-4" />
@@ -133,8 +139,8 @@ export default function WebhooksPage() {
           <Button
             variant="ghost"
             size="sm"
-            aria-label={`Un-subscribe ${h.Description ?? h.ID}`}
-            title="Un-subscribe"
+            aria-label={t("webhooks.unsubscribeAria", { name: h.Description ?? h.ID })}
+            title={t("webhooks.unsubscribe")}
             onClick={() => setDeleting(h)}
           >
             <Trash2 className="size-4" />
@@ -152,15 +158,15 @@ export default function WebhooksPage() {
           action={
             <div className="flex items-center gap-2">
               <Button variant="secondary" size="sm" onClick={() => refetch()} disabled={isFetching}>
-                <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} /> Refresh
+                <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} /> {t("ui.refresh")}
               </Button>
               <Button size="sm" onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> Subscribe
+                <Plus className="size-4" /> {t("webhooks.subscribe")}
               </Button>
             </div>
           }
         >
-          Webhook subscriptions
+          {t("webhooks.cardTitle")}
         </CardTitle>
 
         <div className="mt-5">
@@ -171,11 +177,11 @@ export default function WebhooksPage() {
             loading={isLoading || isFetching}
             error={error}
             onRetry={() => refetch()}
-            emptyTitle="No webhook subscriptions"
-            emptyBody="Subscribe a URL and dk will POST an event every time a selected module changes."
+            emptyTitle={t("webhooks.emptyTitle")}
+            emptyBody={t("webhooks.emptyBody")}
             emptyAction={
               <Button size="sm" onClick={() => setCreating(true)}>
-                <Plus className="size-4" /> Subscribe
+                <Plus className="size-4" /> {t("webhooks.subscribe")}
               </Button>
             }
           />
@@ -188,21 +194,21 @@ export default function WebhooksPage() {
       <ConfirmDialog
         open={!!deleting}
         onClose={() => setDeleting(null)}
-        title="Un-subscribe webhook?"
+        title={t("webhooks.confirm.title")}
         body={
           <>
-            This removes the subscription <strong>{deleting?.Description ?? deleting?.ID}</strong>
+            {t("webhooks.confirm.removes")} <strong>{deleting?.Description ?? deleting?.ID}</strong>
             {deleting?.Url ? (
               <>
                 {" "}
-                pointing at <span className="font-mono text-xs">{deleting.Url}</span>
+                {t("webhooks.confirm.pointingAt")}{" "}
+                <span className="font-mono text-xs">{deleting.Url}</span>
               </>
             ) : null}
-            . dk will stop delivering events to it immediately. You can subscribe the same URL again
-            at any time.
+            . {t("webhooks.confirm.consequence")}
           </>
         }
-        confirmLabel="Un-subscribe"
+        confirmLabel={t("webhooks.unsubscribe")}
         loading={remove.isPending}
         onConfirm={() => {
           if (!deleting) return;
@@ -210,10 +216,13 @@ export default function WebhooksPage() {
             { path: `/admin/webhook/${encodeURIComponent(deleting.ID)}`, method: "DELETE" },
             {
               onSuccess: () => {
-                toast.success("Webhook removed", `${deleting.Description ?? deleting.ID} was un-subscribed.`);
+                toast.success(
+                  t("webhooks.toast.removed"),
+                  t("webhooks.toast.removedDetail", { name: deleting.Description ?? deleting.ID }),
+                );
                 setDeleting(null);
               },
-              onError: (e) => toast.error("Could not un-subscribe", e.message),
+              onError: (e) => toast.error(t("webhooks.toast.removeFailed"), e.message),
             },
           );
         }}

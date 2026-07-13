@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { WebhookBody, WebhookSubscription } from "@/lib/api/types/platform";
 
 const EVENT_KEYS = ["Product", "Customer", "Vendor", "Project"] as const;
@@ -46,6 +47,7 @@ export function WebhookFormDialog({
   onClose: () => void;
   initial?: WebhookSubscription | null;
 }) {
+  const t = useT();
   const toast = useToast();
   const editing = !!initial;
 
@@ -82,9 +84,9 @@ export function WebhookFormDialog({
 
   function submit() {
     const next: typeof errors = {};
-    if (!description.trim()) next.description = "Description is required";
-    if (!url.trim()) next.url = "URL is required";
-    else if (!/^https?:\/\//i.test(url.trim())) next.url = "Must start with http:// or https://";
+    if (!description.trim()) next.description = t("webhooks.form.descriptionRequired");
+    if (!url.trim()) next.url = t("webhooks.form.urlRequired");
+    else if (!/^https?:\/\//i.test(url.trim())) next.url = t("webhooks.form.urlScheme");
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -104,13 +106,16 @@ export function WebhookFormDialog({
       {
         onSuccess: () => {
           toast.success(
-            editing ? "Subscription updated" : "Webhook subscribed",
+            editing ? t("webhooks.toast.updated") : t("webhooks.toast.subscribed"),
             `${description.trim()} → ${url.trim()}`,
           );
           onClose();
         },
         onError: (e) =>
-          toast.error(editing ? "Could not update subscription" : "Could not subscribe", e.message),
+          toast.error(
+            editing ? t("webhooks.toast.updateFailed") : t("webhooks.toast.subscribeFailed"),
+            e.message,
+          ),
       },
     );
   }
@@ -119,11 +124,11 @@ export function WebhookFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={editing ? "Manage subscription" : "Subscribe to webhooks"}
+      title={editing ? t("webhooks.manage") : t("webhooks.dialog.subscribeTitle")}
       subtitle={
         editing
-          ? `Editing ${initial?.Description ?? initial?.ID}`
-          : "dk will POST an event to your URL whenever a selected module changes."
+          ? t("webhooks.dialog.editingName", { name: initial?.Description ?? initial?.ID ?? "" })
+          : t("webhooks.dialog.subscribeSubtitle")
       }
     >
       <form
@@ -133,15 +138,15 @@ export function WebhookFormDialog({
           submit();
         }}
       >
-        <Field label="Description" required error={errors.description}>
+        <Field label={t("webhooks.form.description")} required error={errors.description}>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. Update webpage"
+            placeholder={t("webhooks.form.descriptionPlaceholder")}
             autoFocus
           />
         </Field>
-        <Field label="Payload URL" required error={errors.url}>
+        <Field label={t("webhooks.form.url")} required error={errors.url}>
           <Input
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -150,32 +155,36 @@ export function WebhookFormDialog({
           />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Authorization scheme" hint="optional — e.g. Bearer or Basic">
+          <Field label={t("webhooks.form.scheme")} hint={t("webhooks.form.schemeHint")}>
             <Input value={scheme} onChange={(e) => setScheme(e.target.value)} placeholder="Bearer" />
           </Field>
-          <Field label="Authorization value" hint="optional">
-            <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="secret" />
+          <Field label={t("webhooks.form.value")} hint={t("webhooks.form.optional")}>
+            <Input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder={t("webhooks.form.valuePlaceholder")}
+            />
           </Field>
         </div>
-        <Field label="Events" hint="modules that trigger a delivery">
+        <Field label={t("webhooks.form.events")} hint={t("webhooks.form.eventsHint")}>
           <div className="grid grid-cols-2 gap-2">
             {EVENT_KEYS.map((k) => (
               <Checkbox
                 key={k}
-                label={k}
+                label={t(`webhooks.event.${k.toLowerCase()}`)}
                 checked={events[k]}
                 onChange={(v) => setEvents((prev) => ({ ...prev, [k]: v }))}
               />
             ))}
           </div>
         </Field>
-        <Checkbox label="Enabled — deliver events immediately" checked={enabled} onChange={setEnabled} />
+        <Checkbox label={t("webhooks.form.enabledLabel")} checked={enabled} onChange={setEnabled} />
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={save.isPending}>
-            {editing ? "Save changes" : "Subscribe"}
+            {editing ? t("webhooks.saveChanges") : t("webhooks.subscribe")}
           </Button>
         </div>
       </form>

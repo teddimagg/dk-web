@@ -6,10 +6,12 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { RegisterTimeClockBody } from "@/lib/api/types/platform";
 
 /** POST /timeclock/register — manual time-clock entry per the Time Clock doc. */
 export function RegisterEntryDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
   const toast = useToast();
   const [employee, setEmployee] = useState("");
   const [start, setStart] = useState("");
@@ -29,10 +31,10 @@ export function RegisterEntryDialog({ open, onClose }: { open: boolean; onClose:
 
   function submit() {
     const next: typeof errors = {};
-    if (!employee.trim()) next.employee = "Employee number is required";
-    if (!start) next.start = "Start time is required";
+    if (!employee.trim()) next.employee = t("timeclock.form.employeeRequired");
+    if (!start) next.start = t("timeclock.form.startRequired");
     if (start && end && new Date(end).getTime() < new Date(start).getTime())
-      next.end = "End must be after start";
+      next.end = t("timeclock.form.endAfterStart");
     setErrors(next);
     if (Object.keys(next).length > 0) return;
 
@@ -46,12 +48,14 @@ export function RegisterEntryDialog({ open, onClose }: { open: boolean; onClose:
       {
         onSuccess: () => {
           toast.success(
-            "Time entry registered",
-            `Employee ${employee.trim()}${end ? " — clocked in and out" : " — clocked in"}.`,
+            t("timeclock.toast.registered"),
+            t(end ? "timeclock.toast.registeredInOut" : "timeclock.toast.registeredIn", {
+              employee: employee.trim(),
+            }),
           );
           onClose();
         },
-        onError: (e) => toast.error("Could not register entry", e.message),
+        onError: (e) => toast.error(t("timeclock.toast.registerFailed"), e.message),
       },
     );
   }
@@ -60,8 +64,8 @@ export function RegisterEntryDialog({ open, onClose }: { open: boolean; onClose:
     <Dialog
       open={open}
       onClose={onClose}
-      title="Register time entry"
-      subtitle="Creates a time-clock registration for an employee. Leave end empty to clock the employee in."
+      title={t("timeclock.dialog.title")}
+      subtitle={t("timeclock.dialog.subtitle")}
     >
       <form
         className="space-y-4"
@@ -70,28 +74,28 @@ export function RegisterEntryDialog({ open, onClose }: { open: boolean; onClose:
           submit();
         }}
       >
-        <Field label="Employee number" required error={errors.employee}>
+        <Field label={t("timeclock.form.employeeNumber")} required error={errors.employee}>
           <Input
             value={employee}
             onChange={(e) => setEmployee(e.target.value)}
-            placeholder="e.g. 1710794709"
+            placeholder={t("timeclock.form.employeePlaceholder")}
             autoFocus
           />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Start" required error={errors.start}>
+          <Field label={t("timeclock.form.start")} required error={errors.start}>
             <Input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} />
           </Field>
-          <Field label="End" hint="optional" error={errors.end}>
+          <Field label={t("timeclock.form.end")} hint={t("timeclock.form.optional")} error={errors.end}>
             <Input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} />
           </Field>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={register.isPending}>
-            Register entry
+            {t("timeclock.registerEntry")}
           </Button>
         </div>
       </form>

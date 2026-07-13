@@ -12,6 +12,7 @@ import { useDkQuery } from "@/lib/hooks/useDk";
 import { dkFetchBlob, downloadBlob } from "@/lib/api/client";
 import { useActiveCompany } from "@/lib/stores/companies";
 import { formatDate } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type {
   MemberApplication,
   MemberApplicationAttachment,
@@ -71,6 +72,7 @@ export function AttachmentsDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const t = useT();
   const company = useActiveCompany();
   const toast = useToast();
   const appId = applicationId(application);
@@ -108,9 +110,9 @@ export function AttachmentsDialog({
         { token: company.token },
       );
       downloadBlob(blob, attachmentName(a));
-      toast.success("Attachment downloaded", attachmentName(a));
+      toast.success(t("members.attach.downloaded"), attachmentName(a));
     } catch (e) {
-      toast.error("Could not download attachment", e instanceof Error ? e.message : undefined);
+      toast.error(t("members.attach.downloadFailed"), e instanceof Error ? e.message : undefined);
     } finally {
       setDownloadingId(null);
     }
@@ -130,10 +132,10 @@ export function AttachmentsDialog({
         const text = await res.text().catch(() => "");
         throw new Error(extractApiMessage(text) || `${res.status} ${res.statusText}`);
       }
-      toast.success("Attachment uploaded", file.name);
+      toast.success(t("members.attach.uploaded"), file.name);
       if (fund) void attachments.refetch();
     } catch (e) {
-      toast.error("Could not upload attachment", e instanceof Error ? e.message : undefined);
+      toast.error(t("members.attach.uploadFailed"), e instanceof Error ? e.message : undefined);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -143,7 +145,7 @@ export function AttachmentsDialog({
   const columns: Column<MemberApplicationAttachment>[] = [
     {
       key: "file",
-      header: "File",
+      header: t("members.field.file"),
       render: (a) => (
         <span className="flex items-center gap-2 font-medium text-ink">
           <FileText className="size-4 shrink-0 text-mist" />
@@ -153,13 +155,13 @@ export function AttachmentsDialog({
     },
     {
       key: "size",
-      header: "Size",
+      header: t("members.field.size"),
       align: "right",
       render: (a) => <span className="tnum">{formatBytes(a.Size ?? a.FileSize)}</span>,
     },
     {
       key: "date",
-      header: "Date",
+      header: t("members.field.date"),
       render: (a) => <span className="tnum">{formatDate(a.Created ?? a.Date ?? a.Modified)}</span>,
     },
     {
@@ -176,7 +178,7 @@ export function AttachmentsDialog({
             loading={id != null && downloadingId === String(id)}
             onClick={() => void download(a)}
           >
-            <Download className="size-4" /> Download
+            <Download className="size-4" /> {t("members.attach.download")}
           </Button>
         );
       },
@@ -187,8 +189,12 @@ export function AttachmentsDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={`Attachments — application ${appId != null ? `#${appId}` : ""}`.trim()}
-      subtitle="Attachment listing and download are keyed by fund in dkPlus."
+      title={
+        appId != null
+          ? t("members.attach.dialogTitleId", { id: appId })
+          : t("members.attach.dialogTitle")
+      }
+      subtitle={t("members.attach.subtitle")}
       wide
     >
       <div className="space-y-4">
@@ -199,12 +205,12 @@ export function AttachmentsDialog({
           }}
           className="flex items-end gap-2"
         >
-          <Field label="Fund" hint="required to list attachments" className="flex-1">
+          <Field label={t("members.field.fund")} hint={t("members.attach.fundHint")} className="flex-1">
             <Input
               list="member-fund-suggestions"
               value={fundDraft}
               onChange={(e) => setFundDraft(e.target.value)}
-              placeholder="e.g. 02"
+              placeholder={t("members.fundPlaceholder")}
             />
           </Field>
           <datalist id="member-fund-suggestions">
@@ -213,16 +219,12 @@ export function AttachmentsDialog({
             ))}
           </datalist>
           <Button type="submit" variant="secondary" disabled={!fundDraft.trim()}>
-            Load
+            {t("members.attach.load")}
           </Button>
         </form>
 
         {!fund && (
-          <p className="text-[13px] leading-relaxed text-fog">
-            This application row didn&apos;t include a fund id. Enter the fund the application
-            belongs to (see the Funds tab on the member page) and press Load to list its
-            attachments. Uploading works without a fund id.
-          </p>
+          <p className="text-[13px] leading-relaxed text-fog">{t("members.attach.fundNote")}</p>
         )}
 
         {fund && appId != null && (
@@ -233,8 +235,8 @@ export function AttachmentsDialog({
             loading={attachments.isLoading || attachments.isFetching}
             error={attachments.error ?? null}
             onRetry={() => attachments.refetch()}
-            emptyTitle="No attachments"
-            emptyBody="Upload the first attachment for this application below."
+            emptyTitle={t("members.attach.emptyTitle")}
+            emptyBody={t("members.attach.emptyBody")}
           />
         )}
 
@@ -243,7 +245,7 @@ export function AttachmentsDialog({
             ref={fileRef}
             type="file"
             className="hidden"
-            aria-label="Choose attachment file"
+            aria-label={t("members.attach.chooseAria")}
             onChange={(e) => {
               const f = e.target.files?.[0];
               if (f) void upload(f);
@@ -256,16 +258,17 @@ export function AttachmentsDialog({
             disabled={appId == null}
             onClick={() => fileRef.current?.click()}
           >
-            <Plus className="size-4" /> Upload attachment
+            <Plus className="size-4" /> {t("members.attach.upload")}
           </Button>
           <Button
             variant="ghost"
             size="sm"
             disabled={!fund}
             onClick={() => attachments.refetch()}
-            aria-label="Refresh attachments"
+            aria-label={t("members.tab.refreshAria", { section: t("members.attach.label") })}
           >
-            <RefreshCw className={clsx("size-4", attachments.isFetching && "animate-spin")} /> Refresh
+            <RefreshCw className={clsx("size-4", attachments.isFetching && "animate-spin")} />{" "}
+            {t("ui.refresh")}
           </Button>
         </div>
       </div>

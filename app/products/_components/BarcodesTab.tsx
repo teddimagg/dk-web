@@ -8,6 +8,7 @@ import { JsonView } from "@/components/ui/JsonView";
 import { KV } from "@/components/ui/KV";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { timeAgo } from "@/lib/format";
 import { barcodeValue, type ProductBarcode } from "@/lib/api/types/products";
 
@@ -17,6 +18,7 @@ import { barcodeValue, type ProductBarcode } from "@/lib/api/types/products";
  */
 export function BarcodesTab({ itemcode }: { itemcode: string }) {
   const enc = encodeURIComponent(itemcode);
+  const t = useT();
   const [selected, setSelected] = useState<string | null>(null);
 
   const list = useDkQuery<ProductBarcode[]>(["product", itemcode, "barcodes"], `/Product/${enc}/barcode`);
@@ -30,12 +32,16 @@ export function BarcodesTab({ itemcode }: { itemcode: string }) {
   const columns: Column<ProductBarcode>[] = [
     {
       key: "code",
-      header: "Barcode",
+      header: t("products.barcode"),
       render: (b) => <span className="font-mono text-xs font-medium">{barcodeValue(b) || "–"}</span>,
     },
-    { key: "desc", header: "Description", render: (b) => b.Description || "–" },
-    { key: "unit", header: "Unit", render: (b) => b.UnitCode || "–" },
-    { key: "mod", header: "Modified", render: (b) => <span className="text-fog">{timeAgo(b.Modified)}</span> },
+    { key: "desc", header: t("products.description"), render: (b) => b.Description || "–" },
+    { key: "unit", header: t("products.unit"), render: (b) => b.UnitCode || "–" },
+    {
+      key: "mod",
+      header: t("products.modifiedAt"),
+      render: (b) => <span className="text-fog">{timeAgo(b.Modified)}</span>,
+    },
   ];
 
   const detailEntries = detail.data
@@ -57,14 +63,14 @@ export function BarcodesTab({ itemcode }: { itemcode: string }) {
         loading={list.isFetching}
         error={list.error}
         onRetry={() => list.refetch()}
-        emptyTitle="No barcodes"
-        emptyBody="This product has no barcodes registered in dkPlus."
+        emptyTitle={t("products.noBarcodes")}
+        emptyBody={t("products.noBarcodesBody")}
       />
       <Dialog
         open={selected !== null}
         onClose={() => setSelected(null)}
-        title={`Barcode ${selected ?? ""}`}
-        subtitle={`On product ${itemcode}`}
+        title={t("products.barcodeDialogTitle", { code: selected ?? "" })}
+        subtitle={t("products.barcodeDialogSubtitle", { code: itemcode })}
       >
         {detail.isLoading ? (
           <div className="space-y-2">

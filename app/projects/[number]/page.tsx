@@ -14,6 +14,7 @@ import { KV } from "@/components/ui/KV";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Tabs } from "@/components/ui/Tabs";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatDate } from "@/lib/format";
 import type { Project, ProjectInvoice } from "@/lib/api/types/projects";
 
@@ -23,6 +24,7 @@ function invoiceNumber(inv: ProjectInvoice): string {
 }
 
 export default function ProjectDetailPage() {
+  const t = useT();
   const params = useParams<{ number: string }>();
   const raw = params?.number;
   const number = decodeURIComponent(Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? ""));
@@ -46,25 +48,25 @@ export default function ProjectDetailPage() {
   const invoiceColumns: Column<ProjectInvoice>[] = [
     {
       key: "number",
-      header: "Invoice",
+      header: t("projects.invoice.number"),
       width: "110px",
       render: (inv) => <span className="font-mono text-xs text-soot">{invoiceNumber(inv)}</span>,
     },
     {
       key: "date",
-      header: "Date",
+      header: t("projects.invoice.date"),
       width: "110px",
       render: (inv) => <span className="tnum">{formatDate(inv.Date)}</span>,
     },
     {
       key: "due",
-      header: "Due date",
+      header: t("projects.invoice.dueDate"),
       width: "110px",
       render: (inv) => <span className="tnum">{formatDate(inv.DueDate)}</span>,
     },
     {
       key: "customer",
-      header: "Customer",
+      header: t("projects.invoice.customer"),
       render: (inv) =>
         inv.Customer?.Name || inv.Customer?.Number ? (
           <span className="text-ink">
@@ -79,12 +81,12 @@ export default function ProjectDetailPage() {
     },
     {
       key: "reference",
-      header: "Reference",
+      header: t("projects.invoice.reference"),
       render: (inv) => <span className="text-fog">{inv.Reference || "–"}</span>,
     },
     {
       key: "total",
-      header: "Total incl. tax",
+      header: t("projects.invoice.total"),
       align: "right",
       render: (inv) => (
         <span className="tnum font-medium">
@@ -98,18 +100,24 @@ export default function ProjectDetailPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => router.push("/projects")}>
-          <ArrowLeft className="size-4" /> All projects
+          <ArrowLeft className="size-4" /> {t("projects.detail.back")}
         </Button>
         {project.isLoading ? (
           <Skeleton className="h-8 w-56" />
         ) : (
           <h2 className="text-2xl font-semibold tracking-tight text-ink">
-            {p?.Name || `Project ${number}`}
+            {p?.Name || t("projects.detail.fallbackName", { number })}
           </h2>
         )}
-        <span className="font-mono text-xs text-mist">Nº {number}</span>
+        <span className="font-mono text-xs text-mist">
+          {t("projects.detail.numberTag", { number })}
+        </span>
         {p?.Closed != null &&
-          (p.Closed ? <Badge tone="red">Closed</Badge> : <Badge tone="green">Open</Badge>)}
+          (p.Closed ? (
+            <Badge tone="red">{t("projects.status.closed")}</Badge>
+          ) : (
+            <Badge tone="green">{t("projects.status.open")}</Badge>
+          ))}
         <Button
           variant="ghost"
           size="sm"
@@ -118,7 +126,7 @@ export default function ProjectDetailPage() {
             project.refetch();
             invoices.refetch();
           }}
-          aria-label="Refresh project"
+          aria-label={t("projects.detail.refreshAria")}
         >
           <RefreshCw
             className={project.isFetching || invoices.isFetching ? "size-4 animate-spin" : "size-4"}
@@ -128,8 +136,8 @@ export default function ProjectDetailPage() {
 
       <Tabs
         tabs={[
-          { id: "details", label: "Details" },
-          { id: "invoices", label: "Invoices", count: invoices.data?.length },
+          { id: "details", label: t("projects.detail.tabDetails") },
+          { id: "invoices", label: t("projects.detail.tabInvoices"), count: invoices.data?.length },
         ]}
         active={tab}
         onChange={setTab}
@@ -138,7 +146,7 @@ export default function ProjectDetailPage() {
       {tab === "details" && (
         <Card className="p-6">
           <CardTitle icon={<FolderKanban />} className="mb-5">
-            Project details
+            {t("projects.detail.cardTitle")}
           </CardTitle>
           {project.error ? (
             <ErrorState error={project.error} onRetry={() => project.refetch()} />
@@ -151,22 +159,34 @@ export default function ProjectDetailPage() {
           ) : (
             <KV
               items={[
-                { label: "Number", value: String(p?.Number ?? number) },
-                { label: "Name", value: p?.Name },
-                { label: "Description", value: p?.Description },
-                { label: "Manager", value: p?.Manager },
-                { label: "Contact", value: p?.Contact },
-                { label: "Start date", value: p?.StartDate ? formatDate(p.StartDate) : undefined },
-                { label: "End date", value: p?.EndDate ? formatDate(p.EndDate) : undefined },
-                { label: "Created", value: p?.Created ? formatDate(p.Created) : undefined },
-                { label: "Modified", value: p?.Modified ? formatDate(p.Modified) : undefined },
+                { label: t("projects.field.number"), value: String(p?.Number ?? number) },
+                { label: t("projects.field.name"), value: p?.Name },
+                { label: t("projects.field.description"), value: p?.Description },
+                { label: t("projects.field.manager"), value: p?.Manager },
+                { label: t("projects.field.contact"), value: p?.Contact },
                 {
-                  label: "Status",
+                  label: t("projects.field.startDate"),
+                  value: p?.StartDate ? formatDate(p.StartDate) : undefined,
+                },
+                {
+                  label: t("projects.field.endDate"),
+                  value: p?.EndDate ? formatDate(p.EndDate) : undefined,
+                },
+                {
+                  label: t("projects.field.created"),
+                  value: p?.Created ? formatDate(p.Created) : undefined,
+                },
+                {
+                  label: t("projects.field.modified"),
+                  value: p?.Modified ? formatDate(p.Modified) : undefined,
+                },
+                {
+                  label: t("projects.field.status"),
                   value:
                     p?.Closed == null ? undefined : p.Closed ? (
-                      <Badge tone="red">Closed</Badge>
+                      <Badge tone="red">{t("projects.status.closed")}</Badge>
                     ) : (
-                      <Badge tone="green">Open</Badge>
+                      <Badge tone="green">{t("projects.status.open")}</Badge>
                     ),
                 },
               ]}
@@ -178,8 +198,8 @@ export default function ProjectDetailPage() {
       {tab === "invoices" && (
         <Card className="overflow-hidden">
           <div className="flex items-center justify-between border-b border-line px-6 py-4">
-            <CardTitle icon={<ReceiptText />}>Invoices for this project</CardTitle>
-            <span className="text-[13px] text-fog">Rows open the invoice in Sales</span>
+            <CardTitle icon={<ReceiptText />}>{t("projects.detail.invoicesTitle")}</CardTitle>
+            <span className="text-[13px] text-fog">{t("projects.detail.invoicesHint")}</span>
           </div>
           <DataTable<ProjectInvoice>
             columns={invoiceColumns}
@@ -191,8 +211,8 @@ export default function ProjectDetailPage() {
             onRowClick={(inv) =>
               router.push(`/sales/invoices/${encodeURIComponent(invoiceNumber(inv))}`)
             }
-            emptyTitle="No invoices"
-            emptyBody="No sales invoices have been created for this project yet."
+            emptyTitle={t("projects.detail.invoicesEmptyTitle")}
+            emptyBody={t("projects.detail.invoicesEmptyBody")}
           />
         </Card>
       )}
@@ -200,11 +220,11 @@ export default function ProjectDetailPage() {
       <JsonView data={tab === "invoices" ? invoices.data : project.data} />
 
       <p className="text-[13px] text-fog">
-        Looking for project postings? See the{" "}
+        {t("projects.detail.postingsBefore")}{" "}
         <Link href="/projects/transactions" className="font-medium text-ink underline underline-offset-2">
-          project transaction feed
+          {t("projects.detail.postingsLink")}
         </Link>
-        .
+        {t("projects.detail.postingsAfter")}
       </p>
     </div>
   );

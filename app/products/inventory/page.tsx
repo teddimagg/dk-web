@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/ui/Dialog";
 import { Field, Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type {
   InventoryJournalBody,
   InventoryingBody,
@@ -47,14 +48,15 @@ function LinesEditor({
   onChange: (lines: EditableLine[]) => void;
   amountLabel: string;
 }) {
+  const t = useT();
   const update = (i: number, patch: Partial<EditableLine>) =>
     onChange(lines.map((l, idx) => (idx === i ? { ...l, ...patch } : l)));
 
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-[1fr_90px_80px_28px] gap-2 text-xs font-medium uppercase tracking-wide text-mist">
-        <span>Item code</span>
-        <span>Warehouse</span>
+        <span>{t("products.itemCode")}</span>
+        <span>{t("products.warehouse")}</span>
         <span className="text-right">{amountLabel}</span>
         <span />
       </div>
@@ -63,15 +65,15 @@ function LinesEditor({
           <Input
             value={l.itemCode}
             onChange={(e) => update(i, { itemCode: e.target.value })}
-            placeholder="item code"
-            aria-label={`Line ${i + 1} item code`}
+            placeholder={t("products.itemCodePlaceholder")}
+            aria-label={t("products.lineItemCodeAria", { n: i + 1 })}
             className="h-9 font-mono text-xs"
           />
           <Input
             value={l.warehouse}
             onChange={(e) => update(i, { warehouse: e.target.value })}
             placeholder="bg1"
-            aria-label={`Line ${i + 1} warehouse`}
+            aria-label={t("products.lineWarehouseAria", { n: i + 1 })}
             className="h-9 text-xs"
           />
           <Input
@@ -79,14 +81,14 @@ function LinesEditor({
             onChange={(e) => update(i, { amount: e.target.value })}
             placeholder="0"
             inputMode="decimal"
-            aria-label={`Line ${i + 1} ${amountLabel}`}
+            aria-label={t("products.lineAmountAria", { n: i + 1, label: amountLabel })}
             className="h-9 text-right text-xs tnum"
           />
           <button
             type="button"
             onClick={() => onChange(lines.filter((_, idx) => idx !== i))}
             disabled={lines.length === 1}
-            aria-label={`Remove line ${i + 1}`}
+            aria-label={t("products.removeLineAria", { n: i + 1 })}
             className="grid size-7 cursor-pointer place-items-center rounded-full text-mist transition-colors hover:bg-haze hover:text-danger disabled:pointer-events-none disabled:opacity-30"
           >
             <Trash2 className="size-3.5" />
@@ -94,7 +96,7 @@ function LinesEditor({
         </div>
       ))}
       <Button type="button" variant="ghost" size="sm" onClick={() => onChange([...lines, { ...EMPTY_LINE }])}>
-        <Plus className="size-4" /> Add line
+        <Plus className="size-4" /> {t("products.addLine")}
       </Button>
     </div>
   );
@@ -103,6 +105,7 @@ function LinesEditor({
 /** POST /product/register/journal */
 function JournalCard() {
   const toast = useToast();
+  const t = useT();
   const [description, setDescription] = useState("");
   const [lines, setLines] = useState<EditableLine[]>([{ ...EMPTY_LINE }]);
   const [formError, setFormError] = useState<string | null>(null);
@@ -112,8 +115,8 @@ function JournalCard() {
 
   function requestSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!description.trim()) return setFormError("A description is required.");
-    if (!linesValid(lines)) return setFormError("Every line needs an item code, a warehouse and a numeric quantity.");
+    if (!description.trim()) return setFormError(t("products.descriptionRequired"));
+    if (!linesValid(lines)) return setFormError(t("products.linesInvalidQty"));
     setFormError(null);
     setConfirming(true);
   }
@@ -131,13 +134,13 @@ function JournalCard() {
       { path: "/product/register/journal", method: "POST", body },
       {
         onSuccess: () => {
-          toast.success("Journal registered", `${body.Lines.length} line(s) posted to the inventory journal.`);
+          toast.success(t("products.journalRegistered"), t("products.journalRegisteredDetail", { n: body.Lines.length }));
           setDescription("");
           setLines([{ ...EMPTY_LINE }]);
           setConfirming(false);
         },
         onError: (err) => {
-          toast.error("Journal registration failed", err.message);
+          toast.error(t("products.journalFailed"), err.message);
           setConfirming(false);
         },
       },
@@ -147,38 +150,35 @@ function JournalCard() {
   return (
     <Card className="p-6">
       <CardTitle icon={<ClipboardList />} className="mb-3">
-        Inventory journal
+        {t("products.journalTitle")}
       </CardTitle>
-      <p className="mb-4 text-[13px] leading-relaxed text-fog">
-        Post quantity adjustments straight into the inventory journal — positive quantities add stock, negative
-        quantities remove it.
-      </p>
+      <p className="mb-4 text-[13px] leading-relaxed text-fog">{t("products.journalIntro")}</p>
       <form onSubmit={requestSubmit} className="space-y-4">
-        <Field label="Description" required>
+        <Field label={t("products.description")} required>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. Damaged goods write-off"
+            placeholder={t("products.journalDescPlaceholder")}
           />
         </Field>
-        <LinesEditor lines={lines} onChange={setLines} amountLabel="Qty" />
+        <LinesEditor lines={lines} onChange={setLines} amountLabel={t("products.qty")} />
         {formError && <p className="text-xs text-danger">{formError}</p>}
         <Button type="submit" loading={register.isPending} className="w-full">
-          Register journal
+          {t("products.registerJournal")}
         </Button>
       </form>
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
         onConfirm={submit}
-        title="Register inventory journal?"
+        title={t("products.journalConfirmTitle")}
         body={
           <>
-            This posts <strong>{lines.length} line(s)</strong> (&ldquo;{description.trim()}&rdquo;) to the inventory
-            journal and adjusts stock levels. The registration cannot be undone from dkPanel.
+            {t("products.journalConfirmIntro")} <strong>{t("products.nLines", { n: lines.length })}</strong>{" "}
+            {t("products.journalConfirmRest", { desc: description.trim() })}
           </>
         }
-        confirmLabel="Register"
+        confirmLabel={t("products.register")}
         loading={register.isPending}
       />
     </Card>
@@ -188,6 +188,7 @@ function JournalCard() {
 /** POST /Product/register/transfer */
 function TransferCard() {
   const toast = useToast();
+  const t = useT();
   const [itemCode, setItemCode] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -201,9 +202,9 @@ function TransferCard() {
   function requestSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!itemCode.trim() || !from.trim() || !to.trim())
-      return setFormError("Item code and both warehouses are required.");
+      return setFormError(t("products.transferMissing"));
     if (quantity.trim() === "" || Number.isNaN(parseNum(quantity)))
-      return setFormError("Quantity must be a number.");
+      return setFormError(t("products.quantityNumeric"));
     setFormError(null);
     setConfirming(true);
   }
@@ -223,8 +224,13 @@ function TransferCard() {
       {
         onSuccess: () => {
           toast.success(
-            "Transfer registered",
-            `${quantity} × ${itemCode.trim()} moved from ${from.trim()} to ${to.trim()}.`,
+            t("products.transferRegistered"),
+            t("products.transferRegisteredDetail", {
+              qty: quantity,
+              code: itemCode.trim(),
+              from: from.trim(),
+              to: to.trim(),
+            }),
           );
           setItemCode("");
           setFrom("");
@@ -234,7 +240,7 @@ function TransferCard() {
           setConfirming(false);
         },
         onError: (err) => {
-          toast.error("Transfer failed", err.message);
+          toast.error(t("products.transferFailed"), err.message);
           setConfirming(false);
         },
       },
@@ -244,29 +250,27 @@ function TransferCard() {
   return (
     <Card className="p-6">
       <CardTitle icon={<ArrowRightLeft />} className="mb-3">
-        Warehouse transfer
+        {t("products.transferTitle")}
       </CardTitle>
-      <p className="mb-4 text-[13px] leading-relaxed text-fog">
-        Move stock of a product from one warehouse to another in a single registration.
-      </p>
+      <p className="mb-4 text-[13px] leading-relaxed text-fog">{t("products.transferIntro")}</p>
       <form onSubmit={requestSubmit} className="space-y-4">
-        <Field label="Item code" required>
+        <Field label={t("products.itemCode")} required>
           <Input
             value={itemCode}
             onChange={(e) => setItemCode(e.target.value)}
-            placeholder="item code"
+            placeholder={t("products.itemCodePlaceholder")}
             className="font-mono"
           />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="From warehouse" required>
+          <Field label={t("products.fromWarehouse")} required>
             <Input value={from} onChange={(e) => setFrom(e.target.value)} placeholder="bg1" />
           </Field>
-          <Field label="To warehouse" required>
+          <Field label={t("products.toWarehouse")} required>
             <Input value={to} onChange={(e) => setTo(e.target.value)} placeholder="ak" />
           </Field>
         </div>
-        <Field label="Quantity" required>
+        <Field label={t("products.quantity")} required>
           <Input
             value={quantity}
             onChange={(e) => setQuantity(e.target.value)}
@@ -275,27 +279,35 @@ function TransferCard() {
             className="text-right tnum"
           />
         </Field>
-        <Field label="Comment" hint="optional">
-          <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Reason for the move" />
+        <Field label={t("products.comment")} hint={t("products.optional")}>
+          <Input
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder={t("products.commentPlaceholder")}
+          />
         </Field>
         {formError && <p className="text-xs text-danger">{formError}</p>}
         <Button type="submit" loading={register.isPending} className="w-full">
-          Register transfer
+          {t("products.registerTransfer")}
         </Button>
       </form>
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
         onConfirm={submit}
-        title="Register warehouse transfer?"
+        title={t("products.transferConfirmTitle")}
         body={
           <>
-            This moves <strong>{quantity || "0"} × {itemCode.trim() || "?"}</strong> from{" "}
-            <strong>{from.trim() || "?"}</strong> to <strong>{to.trim() || "?"}</strong>. The registration cannot be
-            undone from dkPanel — you would need to transfer it back.
+            {t("products.transferConfirmIntro")}{" "}
+            <strong>
+              {quantity || "0"} × {itemCode.trim() || "?"}
+            </strong>{" "}
+            {t("products.transferConfirmFrom")} <strong>{from.trim() || "?"}</strong>{" "}
+            {t("products.transferConfirmTo")} <strong>{to.trim() || "?"}</strong>.{" "}
+            {t("products.transferConfirmRest")}
           </>
         }
-        confirmLabel="Register"
+        confirmLabel={t("products.register")}
         loading={register.isPending}
       />
     </Card>
@@ -305,6 +317,7 @@ function TransferCard() {
 /** POST /product/register/Inventorying */
 function InventoryingCard() {
   const toast = useToast();
+  const t = useT();
   const [description, setDescription] = useState("");
   const [lines, setLines] = useState<EditableLine[]>([{ ...EMPTY_LINE }]);
   const [formError, setFormError] = useState<string | null>(null);
@@ -314,8 +327,8 @@ function InventoryingCard() {
 
   function requestSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!description.trim()) return setFormError("A description is required.");
-    if (!linesValid(lines)) return setFormError("Every line needs an item code, a warehouse and a numeric count.");
+    if (!description.trim()) return setFormError(t("products.descriptionRequired"));
+    if (!linesValid(lines)) return setFormError(t("products.linesInvalidCount"));
     setFormError(null);
     setConfirming(true);
   }
@@ -333,13 +346,13 @@ function InventoryingCard() {
       { path: "/product/register/Inventorying", method: "POST", body },
       {
         onSuccess: () => {
-          toast.success("Stocktake registered", `On-hand quantities corrected for ${body.Lines.length} line(s).`);
+          toast.success(t("products.stocktakeRegistered"), t("products.stocktakeRegisteredDetail", { n: body.Lines.length }));
           setDescription("");
           setLines([{ ...EMPTY_LINE }]);
           setConfirming(false);
         },
         onError: (err) => {
-          toast.error("Stocktake registration failed", err.message);
+          toast.error(t("products.stocktakeFailed"), err.message);
           setConfirming(false);
         },
       },
@@ -349,37 +362,35 @@ function InventoryingCard() {
   return (
     <Card className="p-6">
       <CardTitle icon={<Layers />} className="mb-3">
-        Inventorying (stocktake)
+        {t("products.stocktakeTitle")}
       </CardTitle>
-      <p className="mb-4 text-[13px] leading-relaxed text-fog">
-        Record counted stock per warehouse — dkPlus corrects the on-hand quantity of each product to match the count.
-      </p>
+      <p className="mb-4 text-[13px] leading-relaxed text-fog">{t("products.stocktakeIntro")}</p>
       <form onSubmit={requestSubmit} className="space-y-4">
-        <Field label="Description" required>
+        <Field label={t("products.description")} required>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="e.g. July stocktake"
+            placeholder={t("products.stocktakeDescPlaceholder")}
           />
         </Field>
-        <LinesEditor lines={lines} onChange={setLines} amountLabel="Counted" />
+        <LinesEditor lines={lines} onChange={setLines} amountLabel={t("products.counted")} />
         {formError && <p className="text-xs text-danger">{formError}</p>}
         <Button type="submit" loading={register.isPending} className="w-full">
-          Register stocktake
+          {t("products.registerStocktake")}
         </Button>
       </form>
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
         onConfirm={submit}
-        title="Register stocktake?"
+        title={t("products.stocktakeConfirmTitle")}
         body={
           <>
-            This corrects on-hand stock for <strong>{lines.length} line(s)</strong> (&ldquo;{description.trim()}
-            &rdquo;) to the counted quantities. The correction cannot be undone from dkPanel.
+            {t("products.stocktakeConfirmIntro")} <strong>{t("products.nLines", { n: lines.length })}</strong>{" "}
+            {t("products.stocktakeConfirmRest", { desc: description.trim() })}
           </>
         }
-        confirmLabel="Register"
+        confirmLabel={t("products.register")}
         loading={register.isPending}
       />
     </Card>

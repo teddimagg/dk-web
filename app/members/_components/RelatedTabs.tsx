@@ -11,6 +11,7 @@ import { JsonView } from "@/components/ui/JsonView";
 import { useDkQuery } from "@/lib/hooks/useDk";
 import type { DkError } from "@/lib/api/client";
 import { formatAmount, formatDate, formatInt, formatPercent } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type {
   MemberCareer,
   MemberEducation,
@@ -31,6 +32,7 @@ function TabFrame<T>({
   emptyBody,
 }: {
   icon: ReactNode;
+  /** Already-translated section title. */
   title: string;
   note?: string;
   q: UseQueryResult<T[], DkError>;
@@ -39,6 +41,7 @@ function TabFrame<T>({
   emptyTitle: string;
   emptyBody?: string;
 }) {
+  const t = useT();
   return (
     <div>
       <div className="flex flex-wrap items-center gap-3 px-5 py-4">
@@ -48,7 +51,7 @@ function TabFrame<T>({
           variant="ghost"
           size="sm"
           onClick={() => q.refetch()}
-          aria-label={`Refresh ${title.toLowerCase()}`}
+          aria-label={t("members.tab.refreshAria", { section: title })}
         >
           <RefreshCw className={clsx("size-4", q.isFetching && "animate-spin")} />
         </Button>
@@ -66,7 +69,7 @@ function TabFrame<T>({
       />
       {q.data && q.data.length > 0 && (
         <div className="px-5 pb-5 pt-2">
-          <JsonView data={q.data} label={`Raw ${title.toLowerCase()} payload`} />
+          <JsonView data={q.data} />
         </div>
       )}
     </div>
@@ -82,38 +85,40 @@ function useMemberList<T>(number: string, segment: string, keySegment: string) {
 
 /** GET /member/:number/subgroup */
 export function SubGroupsTab({ number }: { number: string }) {
+  const t = useT();
   const q = useMemberList<MemberSubGroup>(number, "subgroup", "subgroups");
   const columns: Column<MemberSubGroup>[] = [
     {
       key: "group",
-      header: "Group",
+      header: t("members.field.group"),
       render: (r) => <span className="font-medium text-ink">{r.Group ?? r.Code ?? "–"}</span>,
     },
-    { key: "subgroup", header: "Subgroup", render: (r) => r.SubGroup ?? "–" },
-    { key: "name", header: "Name", render: (r) => r.Name ?? r.Description ?? "–" },
-    { key: "from", header: "From", render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
-    { key: "to", header: "To", render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
+    { key: "subgroup", header: t("members.field.subgroup"), render: (r) => r.SubGroup ?? "–" },
+    { key: "name", header: t("members.field.name"), render: (r) => r.Name ?? r.Description ?? "–" },
+    { key: "from", header: t("members.field.from"), render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
+    { key: "to", header: t("members.field.to"), render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
   ];
   return (
     <TabFrame
       icon={<Layers />}
-      title="Subgroups"
+      title={t("members.tabs.subgroups")}
       q={q}
       columns={columns}
       rowKey={(r, i) => r.ID ?? i}
-      emptyTitle="No subgroups"
-      emptyBody="This member does not belong to any subgroup."
+      emptyTitle={t("members.subgroups.emptyTitle")}
+      emptyBody={t("members.subgroups.emptyBody")}
     />
   );
 }
 
 /** GET /member/:number/Career */
 export function CareerTab({ number }: { number: string }) {
+  const t = useT();
   const q = useMemberList<MemberCareer>(number, "Career", "career");
   const columns: Column<MemberCareer>[] = [
     {
       key: "company",
-      header: "Company",
+      header: t("members.field.company"),
       render: (r) => (
         <div>
           <p className="font-medium text-ink">{r.CompanyName || r.Company || "–"}</p>
@@ -121,12 +126,12 @@ export function CareerTab({ number }: { number: string }) {
         </div>
       ),
     },
-    { key: "job", header: "Job title", render: (r) => r.JobTitle || r.JobTitleCode || "–" },
-    { key: "from", header: "From", render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
-    { key: "to", header: "To", render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
+    { key: "job", header: t("members.field.jobTitle"), render: (r) => r.JobTitle || r.JobTitleCode || "–" },
+    { key: "from", header: t("members.field.from"), render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
+    { key: "to", header: t("members.field.to"), render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
     {
       key: "pct",
-      header: "Work %",
+      header: t("members.field.workPct"),
       align: "right",
       render: (r) => (
         <span className="tnum">{r.WorkPercentage != null ? formatPercent(r.WorkPercentage, 0) : "–"}</span>
@@ -134,7 +139,7 @@ export function CareerTab({ number }: { number: string }) {
     },
     {
       key: "description",
-      header: "Description",
+      header: t("members.field.description"),
       render: (r) => (
         <span className="block max-w-72 truncate">
           {r.Description || r.WorkplaceName || r.Workplace || "–"}
@@ -145,31 +150,32 @@ export function CareerTab({ number }: { number: string }) {
   return (
     <TabFrame
       icon={<Briefcase />}
-      title="Career"
+      title={t("members.tabs.career")}
       q={q}
       columns={columns}
       rowKey={(r, i) => r.ID ?? i}
-      emptyTitle="No career records"
-      emptyBody="No employment history has been registered for this member."
+      emptyTitle={t("members.career.emptyTitle")}
+      emptyBody={t("members.career.emptyBody")}
     />
   );
 }
 
 /** GET /member/:number/fund */
 export function FundTab({ number }: { number: string }) {
+  const t = useT();
   const q = useMemberList<MemberFund>(number, "fund", "fund");
   const columns: Column<MemberFund>[] = [
     {
       key: "fund",
-      header: "Fund",
+      header: t("members.field.fund"),
       render: (r) => (
         <span className="font-medium text-ink tnum">{r.Fund ?? r.Code ?? r.Number ?? r.ID ?? "–"}</span>
       ),
     },
-    { key: "name", header: "Name", render: (r) => r.Name ?? r.FundName ?? r.Description ?? "–" },
+    { key: "name", header: t("members.field.name"), render: (r) => r.Name ?? r.FundName ?? r.Description ?? "–" },
     {
       key: "balance",
-      header: "Balance",
+      header: t("members.field.balance"),
       align: "right",
       render: (r) => {
         const v = r.Balance ?? r.Amount;
@@ -178,34 +184,35 @@ export function FundTab({ number }: { number: string }) {
     },
     {
       key: "points",
-      header: "Points",
+      header: t("members.field.points"),
       align: "right",
       render: (r) => <span className="tnum">{r.Points != null ? formatInt(r.Points) : "–"}</span>,
     },
-    { key: "from", header: "From", render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
-    { key: "to", header: "To", render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
+    { key: "from", header: t("members.field.from"), render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
+    { key: "to", header: t("members.field.to"), render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
   ];
   return (
     <TabFrame
       icon={<Wallet />}
-      title="Funds"
-      note="Fund codes listed here are the ids used by the application-attachment routes."
+      title={t("members.tabs.funds")}
+      note={t("members.funds.note")}
       q={q}
       columns={columns}
       rowKey={(r, i) => r.Fund ?? r.Code ?? r.ID ?? i}
-      emptyTitle="No funds"
-      emptyBody="This member has no fund memberships."
+      emptyTitle={t("members.funds.emptyTitle")}
+      emptyBody={t("members.funds.emptyBody")}
     />
   );
 }
 
 /** GET /member/:number/education */
 export function EducationTab({ number }: { number: string }) {
+  const t = useT();
   const q = useMemberList<MemberEducation>(number, "education", "education");
   const columns: Column<MemberEducation>[] = [
     {
       key: "institution",
-      header: "Institution",
+      header: t("members.field.institution"),
       render: (r) => (
         <div>
           <p className="font-medium text-ink">{r.InstitutionDesc || r.Institution || "–"}</p>
@@ -217,60 +224,61 @@ export function EducationTab({ number }: { number: string }) {
     },
     {
       key: "course",
-      header: "Course",
+      header: t("members.field.course"),
       render: (r) => r.Course?.Description || r.Course?.Text || r.Course?.Code || "–",
     },
-    { key: "from", header: "From", render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
-    { key: "to", header: "To", render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
+    { key: "from", header: t("members.field.from"), render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
+    { key: "to", header: t("members.field.to"), render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
     {
       key: "description",
-      header: "Description",
+      header: t("members.field.description"),
       render: (r) => <span className="block max-w-72 truncate">{r.Description || "–"}</span>,
     },
-    { key: "country", header: "Country", render: (r) => r.CountryCode || "–" },
+    { key: "country", header: t("members.field.country"), render: (r) => r.CountryCode || "–" },
   ];
   return (
     <TabFrame
       icon={<GraduationCap />}
-      title="Education"
+      title={t("members.tabs.education")}
       q={q}
       columns={columns}
       rowKey={(r, i) => r.ID ?? i}
-      emptyTitle="No education records"
-      emptyBody="No courses or institutions registered for this member."
+      emptyTitle={t("members.education.emptyTitle")}
+      emptyBody={t("members.education.emptyBody")}
     />
   );
 }
 
 /** GET /member/:number/membership */
 export function MembershipTab({ number }: { number: string }) {
+  const t = useT();
   const q = useMemberList<MemberMembership>(number, "membership", "membership");
   const columns: Column<MemberMembership>[] = [
     {
       key: "code",
-      header: "Code",
+      header: t("members.field.code"),
       render: (r) => (
         <span className="font-medium text-ink">{r.Code ?? r.Group ?? r.Type ?? r.ID ?? "–"}</span>
       ),
     },
-    { key: "name", header: "Name", render: (r) => r.Name ?? r.Description ?? "–" },
-    { key: "from", header: "From", render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
-    { key: "to", header: "To", render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
+    { key: "name", header: t("members.field.name"), render: (r) => r.Name ?? r.Description ?? "–" },
+    { key: "from", header: t("members.field.from"), render: (r) => <span className="tnum">{formatDate(r.Period?.From)}</span> },
+    { key: "to", header: t("members.field.to"), render: (r) => <span className="tnum">{formatDate(r.Period?.To)}</span> },
     {
       key: "status",
-      header: "Status",
+      header: t("members.field.status"),
       render: (r) => (r.Status != null && r.Status !== "" ? String(r.Status) : "–"),
     },
   ];
   return (
     <TabFrame
       icon={<HeartHandshake />}
-      title="Membership"
+      title={t("members.tabs.membership")}
       q={q}
       columns={columns}
       rowKey={(r, i) => r.ID ?? i}
-      emptyTitle="No membership records"
-      emptyBody="No membership periods registered for this member."
+      emptyTitle={t("members.membership.emptyTitle")}
+      emptyBody={t("members.membership.emptyBody")}
     />
   );
 }

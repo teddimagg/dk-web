@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { useToast } from "@/components/ui/Toast";
 import { dkFetchBlob, downloadBlob } from "@/lib/api/client";
+import { useT } from "@/lib/i18n";
 import { useActiveCompany } from "@/lib/stores/companies";
 import { formatDateTime } from "@/lib/format";
 import { attachmentId, attachmentName, type ProductAttachment } from "@/lib/api/types/products";
@@ -23,6 +24,7 @@ export function AttachmentsTab({
 }) {
   const company = useActiveCompany();
   const toast = useToast();
+  const t = useT();
   const [busyId, setBusyId] = useState<number | null>(null);
 
   async function download(a: ProductAttachment) {
@@ -34,9 +36,9 @@ export function AttachmentsTab({
         token: company.token,
       });
       downloadBlob(blob, attachmentName(a));
-      toast.success("Attachment downloaded", attachmentName(a));
+      toast.success(t("products.attachmentDownloaded"), attachmentName(a));
     } catch (err) {
-      toast.error("Download failed", err instanceof Error ? err.message : undefined);
+      toast.error(t("products.downloadFailed"), err instanceof Error ? err.message : undefined);
     } finally {
       setBusyId(null);
     }
@@ -45,7 +47,7 @@ export function AttachmentsTab({
   const columns: Column<ProductAttachment>[] = [
     {
       key: "name",
-      header: "File",
+      header: t("products.file"),
       render: (a) => (
         <span className="flex items-center gap-2">
           <FileText className="size-4 shrink-0 text-mist" />
@@ -55,10 +57,10 @@ export function AttachmentsTab({
     },
     {
       key: "id",
-      header: "ID",
+      header: t("products.id"),
       render: (a) => <span className="font-mono text-xs">{attachmentId(a) ?? "–"}</span>,
     },
-    { key: "linked", header: "Linked", render: (a) => formatDateTime(a.Linked ?? a.Created) },
+    { key: "linked", header: t("products.linked"), render: (a) => formatDateTime(a.Linked ?? a.Created) },
     {
       key: "download",
       header: "",
@@ -71,7 +73,7 @@ export function AttachmentsTab({
           disabled={attachmentId(a) == null}
           onClick={() => download(a)}
         >
-          <Download className="size-4" /> Download
+          <Download className="size-4" /> {t("products.download")}
         </Button>
       ),
     },
@@ -82,8 +84,8 @@ export function AttachmentsTab({
       columns={columns}
       rows={attachments ?? []}
       rowKey={(a, i) => attachmentId(a) ?? i}
-      emptyTitle="No attachments"
-      emptyBody="Files attached to this product in dkPlus will show up here for download."
+      emptyTitle={t("products.noAttachments")}
+      emptyBody={t("products.noAttachmentsBody")}
     />
   );
 }

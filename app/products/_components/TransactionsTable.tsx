@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Pagination } from "@/components/ui/Pagination";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatDate, formatNumber, timeAgo } from "@/lib/format";
 import type { ProductTransaction } from "@/lib/api/types/products";
 
@@ -21,7 +22,7 @@ export function TransactionsTable({
   queryKey,
   showItemCode = true,
   linkToProduct = false,
-  emptyTitle = "No transactions",
+  emptyTitle,
   emptyBody,
 }: {
   pathFor: (page: number, count: number) => string;
@@ -34,6 +35,7 @@ export function TransactionsTable({
   const [page, setPage] = useState(1);
   const router = useRouter();
   const prefetch = usePrefetch();
+  const t = useT();
 
   // Reset to page 1 whenever the underlying filter/key changes.
   const keySignature = JSON.stringify(queryKey);
@@ -49,45 +51,53 @@ export function TransactionsTable({
   const hasMore = (data?.length ?? 0) === COUNT;
 
   const columns: Column<ProductTransaction>[] = [
-    { key: "date", header: "Journal date", render: (t) => formatDate(t.JournalDate) },
+    { key: "date", header: t("products.journalDate"), render: (tx) => formatDate(tx.JournalDate) },
   ];
   if (showItemCode) {
     columns.push({
       key: "item",
-      header: "Item",
-      render: (t) => <span className="font-mono text-xs">{t.ItemCode || "–"}</span>,
+      header: t("products.item"),
+      render: (tx) => <span className="font-mono text-xs">{tx.ItemCode || "–"}</span>,
     });
   }
   columns.push(
-    { key: "wh", header: "Warehouse", render: (t) => <span className="uppercase">{t.Warehouse || "–"}</span> },
+    {
+      key: "wh",
+      header: t("products.warehouse"),
+      render: (tx) => <span className="uppercase">{tx.Warehouse || "–"}</span>,
+    },
     {
       key: "text",
-      header: "Text",
-      render: (t) => (
-        <span className="block max-w-[260px] truncate text-fog" title={t.Text}>
-          {t.Text || "–"}
+      header: t("products.text"),
+      render: (tx) => (
+        <span className="block max-w-[260px] truncate text-fog" title={tx.Text}>
+          {tx.Text || "–"}
         </span>
       ),
     },
     {
       key: "qty",
-      header: "Qty",
+      header: t("products.qty"),
       align: "right",
-      render: (t) => <span className="tnum font-medium">{formatNumber(t.Quantity)}</span>,
+      render: (tx) => <span className="tnum font-medium">{formatNumber(tx.Quantity)}</span>,
     },
     {
       key: "cost",
-      header: "Cost amount",
+      header: t("products.costAmount"),
       align: "right",
-      render: (t) => <span className="tnum">{formatAmount(t.CostAmount, t.CurrencyCode || "ISK")}</span>,
+      render: (tx) => <span className="tnum">{formatAmount(tx.CostAmount, tx.CurrencyCode || "ISK")}</span>,
     },
     {
       key: "sales",
-      header: "Sales amount",
+      header: t("products.salesAmount"),
       align: "right",
-      render: (t) => <span className="tnum">{formatAmount(t.SalesAmount, t.CurrencyCode || "ISK")}</span>,
+      render: (tx) => <span className="tnum">{formatAmount(tx.SalesAmount, tx.CurrencyCode || "ISK")}</span>,
     },
-    { key: "created", header: "Created", render: (t) => <span className="text-fog">{timeAgo(t.Created)}</span> },
+    {
+      key: "created",
+      header: t("products.createdAt"),
+      render: (tx) => <span className="text-fog">{timeAgo(tx.Created)}</span>,
+    },
   );
 
   return (
@@ -112,7 +122,7 @@ export function TransactionsTable({
             }
           : undefined
       }
-      emptyTitle={emptyTitle}
+      emptyTitle={emptyTitle ?? t("products.noTransactions")}
       emptyBody={emptyBody}
       footer={<Pagination page={page} onPage={setPage} hasMore={hasMore} loading={isFetching} />}
     />

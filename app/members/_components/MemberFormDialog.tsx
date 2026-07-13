@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { Member } from "@/lib/api/types/members";
 
 interface FormState {
@@ -55,6 +56,7 @@ export function MemberFormDialog({
   onSaved?: (m: Member) => void;
 }) {
   const isEdit = !!member;
+  const t = useT();
   const toast = useToast();
   const [form, setForm] = useState<FormState>(() => toForm(member));
   const [errors, setErrors] = useState<{ Number?: string; Name?: string }>({});
@@ -75,8 +77,8 @@ export function MemberFormDialog({
 
   function submit() {
     const errs: typeof errors = {};
-    if (!isEdit && !form.Number.trim()) errs.Number = "Member number is required";
-    if (!form.Name.trim()) errs.Name = "Name is required";
+    if (!isEdit && !form.Number.trim()) errs.Number = t("members.form.numberRequired");
+    if (!form.Name.trim()) errs.Name = t("members.form.nameRequired");
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -108,12 +110,18 @@ export function MemberFormDialog({
             m && m.Number
               ? m
               : { Number: member ? member.Number : form.Number.trim(), Name: form.Name.trim() };
-          toast.success(isEdit ? "Member updated" : "Member created", saved.Name ?? saved.Number);
+          toast.success(
+            isEdit ? t("members.form.updated") : t("members.form.created"),
+            saved.Name ?? saved.Number,
+          );
           onClose();
           onSaved?.(saved);
         },
         onError: (e) =>
-          toast.error(isEdit ? "Could not update member" : "Could not create member", e.message),
+          toast.error(
+            isEdit ? t("members.form.updateFailed") : t("members.form.createFailed"),
+            e.message,
+          ),
       },
     );
   }
@@ -122,11 +130,15 @@ export function MemberFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={member ? `Edit ${member.Name || member.Number}` : "New member"}
+      title={
+        member
+          ? t("members.form.editTitle", { name: member.Name || member.Number })
+          : t("members.form.newTitle")
+      }
       subtitle={
         member
-          ? `Updates member ${member.Number} in dkPlus.`
-          : "Creates a new member in the active dkPlus company."
+          ? t("members.form.editSubtitle", { number: member.Number })
+          : t("members.form.newSubtitle")
       }
       wide
     >
@@ -139,54 +151,54 @@ export function MemberFormDialog({
       >
         <div className="grid gap-4 sm:grid-cols-2">
           {!isEdit && (
-            <Field label="Member number" required error={errors.Number}>
+            <Field label={t("members.form.number")} required error={errors.Number}>
               <Input
                 value={form.Number}
                 onChange={set("Number")}
-                placeholder="e.g. 1122334455"
+                placeholder={t("members.form.numberPlaceholder")}
                 autoFocus
               />
             </Field>
           )}
-          <Field label="Name" required error={errors.Name}>
-            <Input value={form.Name} onChange={set("Name")} placeholder="Full name" />
+          <Field label={t("members.field.name")} required error={errors.Name}>
+            <Input value={form.Name} onChange={set("Name")} placeholder={t("members.form.namePlaceholder")} />
           </Field>
-          <Field label="Tag" hint="optional">
-            <Input value={form.Tag} onChange={set("Tag")} placeholder="e.g. IKE" />
+          <Field label={t("members.field.tag")} hint={t("members.optional")}>
+            <Input value={form.Tag} onChange={set("Tag")} placeholder={t("members.form.tagPlaceholder")} />
           </Field>
         </div>
 
         <div className="space-y-3">
-          <p className="text-[13px] font-medium text-fog">Address</p>
+          <p className="text-[13px] font-medium text-fog">{t("members.form.addressSection")}</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Address 1">
+            <Field label={t("members.field.address1")}>
               <Input value={form.Address1} onChange={set("Address1")} />
             </Field>
-            <Field label="Address 2">
+            <Field label={t("members.field.address2")}>
               <Input value={form.Address2} onChange={set("Address2")} />
             </Field>
-            <Field label="Zip code">
+            <Field label={t("members.field.zipcode")}>
               <Input value={form.ZipCode} onChange={set("ZipCode")} />
             </Field>
-            <Field label="City">
+            <Field label={t("members.field.city")}>
               <Input value={form.City} onChange={set("City")} />
             </Field>
-            <Field label="Country code" hint="ISO, e.g. IS">
+            <Field label={t("members.field.countryCode")} hint={t("members.form.countryHint")}>
               <Input value={form.CountryCode} onChange={set("CountryCode")} maxLength={2} />
             </Field>
           </div>
         </div>
 
         <div className="space-y-3">
-          <p className="text-[13px] font-medium text-fog">Contact</p>
+          <p className="text-[13px] font-medium text-fog">{t("members.form.contactSection")}</p>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Phone">
+            <Field label={t("members.field.phone")}>
               <Input value={form.Phone} onChange={set("Phone")} />
             </Field>
-            <Field label="Mobile">
+            <Field label={t("members.field.mobile")}>
               <Input value={form.Mobile} onChange={set("Mobile")} />
             </Field>
-            <Field label="Email" className="sm:col-span-2">
+            <Field label={t("members.field.email")} className="sm:col-span-2">
               <Input type="email" value={form.Email} onChange={set("Email")} />
             </Field>
           </div>
@@ -194,10 +206,10 @@ export function MemberFormDialog({
 
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={save.isPending}>
-            {isEdit ? "Save changes" : "Create member"}
+            {isEdit ? t("members.form.save") : t("members.form.create")}
           </Button>
         </div>
       </form>

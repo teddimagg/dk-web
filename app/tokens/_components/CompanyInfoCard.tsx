@@ -12,20 +12,23 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { useToast } from "@/components/ui/Toast";
 import { dkFetch } from "@/lib/api/client";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { useActiveCompany } from "@/lib/stores/companies";
 import type { CompanyInfoResponse } from "@/lib/api/types/platform";
 
+/** Response flag → module label key from the shared registry translations. */
 const MODULE_FLAGS = [
-  ["Customer", "Customers"],
-  ["Product", "Products"],
-  ["Vendor", "Vendors"],
-  ["Sale", "Sales"],
-  ["Project", "Projects"],
-  ["Member", "Members"],
+  ["Customer", "module.customers.label"],
+  ["Product", "module.products.label"],
+  ["Vendor", "module.vendors.label"],
+  ["Sale", "module.sales.label"],
+  ["Project", "module.projects.label"],
+  ["Member", "module.members.label"],
 ] as const;
 
 /** GET /company — owner, license & company master data + GET /company/connection latency test. */
 export function CompanyInfoCard() {
+  const t = useT();
   const toast = useToast();
   const company = useActiveCompany();
   const { data, isLoading, error, refetch } = useDkQuery<CompanyInfoResponse>(
@@ -41,9 +44,9 @@ export function CompanyInfoCard() {
     try {
       await dkFetch<unknown>("/company/connection", { token: company.token, fresh: true });
       const ms = Math.round(performance.now() - t0);
-      toast.success("Connection OK", `dkPlus answered in ${ms} ms (round trip, measured in the browser).`);
+      toast.success(t("tokens.toast.connectionOk"), t("tokens.latency", { ms }));
     } catch (e) {
-      toast.error("Connection test failed", e instanceof Error ? e.message : String(e));
+      toast.error(t("tokens.toast.connectionFailed"), e instanceof Error ? e.message : String(e));
     } finally {
       setTesting(false);
     }
@@ -60,15 +63,15 @@ export function CompanyInfoCard() {
         action={
           <div className="flex items-center gap-2">
             <Button variant="secondary" size="sm" onClick={() => refetch()}>
-              <RefreshCw className="size-4" /> Refresh
+              <RefreshCw className="size-4" /> {t("ui.refresh")}
             </Button>
             <Button size="sm" onClick={testConnection} loading={testing}>
-              {!testing && <ArrowRightLeft className="size-4" />} Test connection
+              {!testing && <ArrowRightLeft className="size-4" />} {t("tokens.testConnection")}
             </Button>
           </div>
         }
       >
-        Company & license
+        {t("tokens.companyCard.title")}
       </CardTitle>
 
       <div className="mt-5 space-y-6">
@@ -84,25 +87,30 @@ export function CompanyInfoCard() {
           <>
             <div className="grid gap-x-12 gap-y-6 lg:grid-cols-2">
               <div>
-                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-mist">License</p>
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-mist">
+                  {t("tokens.companyCard.license")}
+                </p>
                 <KV
                   columns={1}
                   items={[
-                    { label: "Owner", value: info?.Owner },
-                    { label: "Owner name", value: info?.OwnerName },
-                    { label: "License", value: <span className="font-mono text-xs">{info?.License}</span> },
-                    { label: "Default currency", value: data.General?.DefaultCurrency },
+                    { label: t("tokens.companyCard.owner"), value: info?.Owner },
+                    { label: t("tokens.companyCard.ownerName"), value: info?.OwnerName },
                     {
-                      label: "Default warehouse",
+                      label: t("tokens.companyCard.license"),
+                      value: <span className="font-mono text-xs">{info?.License}</span>,
+                    },
+                    { label: t("tokens.companyCard.defaultCurrency"), value: data.General?.DefaultCurrency },
+                    {
+                      label: t("tokens.companyCard.defaultWarehouse"),
                       value: data.Product?.Warehouse?.Default,
                     },
                   ]}
                 />
                 <p className="mb-3 mt-6 text-xs font-medium uppercase tracking-wide text-mist">
-                  Enabled modules
+                  {t("tokens.companyCard.enabledModules")}
                 </p>
                 <div className="flex flex-wrap gap-1.5">
-                  {MODULE_FLAGS.map(([key, label]) => {
+                  {MODULE_FLAGS.map(([key, labelKey]) => {
                     const section = data[key];
                     const enabled =
                       !!section &&
@@ -110,29 +118,34 @@ export function CompanyInfoCard() {
                       (section as { Enabled?: boolean }).Enabled === true;
                     return (
                       <Badge key={key} tone={enabled ? "green" : "neutral"}>
-                        {label}
+                        {t(labelKey)}
                       </Badge>
                     );
                   })}
                 </div>
               </div>
               <div>
-                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-mist">Company</p>
+                <p className="mb-3 text-xs font-medium uppercase tracking-wide text-mist">
+                  {t("tokens.companyCard.company")}
+                </p>
                 <KV
                   columns={1}
                   items={[
-                    { label: "Number", value: c?.Number },
-                    { label: "Name", value: c?.Name },
-                    { label: "SSN", value: c?.SSNumber },
-                    { label: "VAT number", value: c?.VATNumber },
-                    { label: "Address", value: c?.Address1 },
-                    { label: "Zip / city", value: [c?.ZipCode, c?.City].filter(Boolean).join(" ") },
-                    { label: "Country", value: c?.Country },
-                    { label: "Phone", value: c?.Phone },
-                    { label: "Email", value: c?.Email },
-                    { label: "Bank", value: bank },
-                    { label: "IBAN", value: c?.IBAN },
-                    { label: "Swift", value: c?.Swift },
+                    { label: t("tokens.companyCard.number"), value: c?.Number },
+                    { label: t("tokens.companyCard.name"), value: c?.Name },
+                    { label: t("tokens.companyCard.ssn"), value: c?.SSNumber },
+                    { label: t("tokens.companyCard.vat"), value: c?.VATNumber },
+                    { label: t("tokens.companyCard.address"), value: c?.Address1 },
+                    {
+                      label: t("tokens.companyCard.zipCity"),
+                      value: [c?.ZipCode, c?.City].filter(Boolean).join(" "),
+                    },
+                    { label: t("tokens.companyCard.country"), value: c?.Country },
+                    { label: t("tokens.companyCard.phone"), value: c?.Phone },
+                    { label: t("tokens.companyCard.email"), value: c?.Email },
+                    { label: t("tokens.companyCard.bank"), value: bank },
+                    { label: t("tokens.companyCard.iban"), value: c?.IBAN },
+                    { label: t("tokens.companyCard.swift"), value: c?.Swift },
                   ]}
                 />
               </div>

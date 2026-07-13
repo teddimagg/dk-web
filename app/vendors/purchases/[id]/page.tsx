@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation, useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatDate, formatNumber } from "@/lib/format";
 import type {
   PurchaseLineUpdateBody,
@@ -46,6 +47,7 @@ export default function PurchaseDetailPage() {
   const id = decodeURIComponent(params.id);
   const router = useRouter();
   const toast = useToast();
+  const t = useT();
 
   const [editingOrder, setEditingOrder] = useState(false);
   const [orderDraft, setOrderDraft] = useState({ Reference: "", VendorNumber: "" });
@@ -89,10 +91,10 @@ export default function PurchaseDetailPage() {
       { path: `/purchase/${encodeURIComponent(id)}`, method: "PATCH", body },
       {
         onSuccess: () => {
-          toast.success("Purchase order updated", `Order #${id} was saved.`);
+          toast.success(t("vendors.purchaseDetail.updated"), t("vendors.purchaseDetail.updatedDetail", { id }));
           setEditingOrder(false);
         },
-        onError: (err) => toast.error("Could not update order", err.message),
+        onError: (err) => toast.error(t("vendors.purchaseDetail.updateFailed"), err.message),
       },
     );
   }
@@ -124,10 +126,13 @@ export default function PurchaseDetailPage() {
       { path: `/purchase/${encodeURIComponent(id)}/line/${seq}`, method: "PATCH", body },
       {
         onSuccess: () => {
-          toast.success("Line updated", `Line ${seq} of order #${id} was saved.`);
+          toast.success(
+            t("vendors.purchaseDetail.lineUpdated"),
+            t("vendors.purchaseDetail.lineUpdatedDetail", { seq, id }),
+          );
           setEditingLine(null);
         },
-        onError: (err) => toast.error("Could not update line", err.message),
+        onError: (err) => toast.error(t("vendors.purchaseDetail.lineUpdateFailed"), err.message),
       },
     );
   }
@@ -140,10 +145,13 @@ export default function PurchaseDetailPage() {
       { path: `/purchase/${encodeURIComponent(id)}/line/${seq}`, method: "DELETE" },
       {
         onSuccess: () => {
-          toast.success("Line removed", `Line ${seq} was removed from order #${id}.`);
+          toast.success(
+            t("vendors.purchaseDetail.lineRemoved"),
+            t("vendors.purchaseDetail.lineRemovedDetail", { seq, id }),
+          );
           setDeletingLine(null);
         },
-        onError: (err) => toast.error("Could not remove line", err.message),
+        onError: (err) => toast.error(t("vendors.purchaseDetail.lineRemoveFailed"), err.message),
       },
     );
   }
@@ -153,11 +161,11 @@ export default function PurchaseDetailPage() {
       { path: `/purchase/${encodeURIComponent(id)}`, method: "DELETE" },
       {
         onSuccess: () => {
-          toast.success("Purchase order deleted", `Order #${id} was removed.`);
+          toast.success(t("vendors.purchaseDetail.deleted"), t("vendors.purchaseDetail.deletedDetail", { id }));
           setConfirmDeleteOrder(false);
           router.push("/vendors/purchases");
         },
-        onError: (err) => toast.error("Could not delete order", err.message),
+        onError: (err) => toast.error(t("vendors.purchaseDetail.deleteFailed"), err.message),
       },
     );
   }
@@ -165,19 +173,19 @@ export default function PurchaseDetailPage() {
   const lineColumns: Column<PurchaseOrderLine>[] = [
     {
       key: "seq",
-      header: "Seq",
+      header: t("vendors.col.seq"),
       width: "80px",
       render: (l) => <span className="font-mono text-xs text-fog">{lineSeq(l) ?? "–"}</span>,
     },
-    { key: "warehouse", header: "Warehouse", render: (l) => l.Warehouse ?? "–" },
-    { key: "code", header: "Code", render: (l) => <span className="font-medium">{lineCode(l)}</span> },
-    { key: "external", header: "External code", render: (l) => l.ExternalCode ?? "–" },
-    { key: "text", header: "Description", render: (l) => <span className="text-fog">{l.Description ?? l.Text ?? "–"}</span> },
-    { key: "reference", header: "Reference", render: (l) => l.Reference ?? "–" },
-    { key: "qty", header: "Qty", align: "right", render: (l) => <span className="tnum">{formatNumber(l.Quantity)}</span> },
+    { key: "warehouse", header: t("vendors.col.warehouse"), render: (l) => l.Warehouse ?? "–" },
+    { key: "code", header: t("vendors.col.code"), render: (l) => <span className="font-medium">{lineCode(l)}</span> },
+    { key: "external", header: t("vendors.col.externalCode"), render: (l) => l.ExternalCode ?? "–" },
+    { key: "text", header: t("vendors.field.description"), render: (l) => <span className="text-fog">{l.Description ?? l.Text ?? "–"}</span> },
+    { key: "reference", header: t("vendors.col.reference"), render: (l) => l.Reference ?? "–" },
+    { key: "qty", header: t("vendors.col.qty"), align: "right", render: (l) => <span className="tnum">{formatNumber(l.Quantity)}</span> },
     {
       key: "amount",
-      header: "Amount",
+      header: t("vendors.col.amount"),
       align: "right",
       render: (l) =>
         l.Amount != null || l.TotalAmount != null || l.UnitPrice != null || l.Price != null ? (
@@ -193,13 +201,18 @@ export default function PurchaseDetailPage() {
       width: "100px",
       render: (l) => (
         <span className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="sm" aria-label={`Edit line ${lineSeq(l)}`} onClick={() => openLineEdit(l)}>
+          <Button
+            variant="ghost"
+            size="sm"
+            aria-label={t("vendors.lines.edit", { n: lineSeq(l) ?? "" })}
+            onClick={() => openLineEdit(l)}
+          >
             <Pencil className="size-4" />
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            aria-label={`Remove line ${lineSeq(l)}`}
+            aria-label={t("vendors.lines.remove", { n: lineSeq(l) ?? "" })}
             onClick={() => setDeletingLine(l)}
           >
             <Trash2 className="size-4 text-danger" />
@@ -224,49 +237,55 @@ export default function PurchaseDetailPage() {
           <Link
             href="/vendors/purchases"
             className="grid size-9 place-items-center rounded-full border border-line bg-white text-fog transition-colors hover:text-ink"
-            aria-label="Back to purchase orders"
+            aria-label={t("vendors.purchaseDetail.back")}
           >
             <ArrowLeft className="size-4" />
           </Link>
           <div>
             {order ? (
               <h2 className="flex items-center gap-2 text-xl font-semibold tracking-tight text-ink">
-                Purchase order {order.Number ?? `#${id}`}
+                {t("vendors.purchaseDetail.title", { number: order.Number ?? `#${id}` })}
                 {order.Status != null && order.Status !== "" && <Badge tone="blue">{String(order.Status)}</Badge>}
               </h2>
             ) : (
               <Skeleton className="h-6 w-64" />
             )}
-            <p className="text-[13px] text-fog tnum">Record ID {id}</p>
+            <p className="text-[13px] text-fog tnum">{t("vendors.purchaseDetail.recordId", { id })}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="secondary" onClick={openOrderEdit} disabled={!order}>
-            <Pencil className="size-4" /> Update order
+            <Pencil className="size-4" /> {t("vendors.purchaseDetail.update")}
           </Button>
           <Button variant="danger" onClick={() => setConfirmDeleteOrder(true)} disabled={!order}>
-            <Trash2 className="size-4" /> Delete
+            <Trash2 className="size-4" /> {t("ui.delete")}
           </Button>
         </div>
       </div>
 
       <Card className="p-6">
         <CardTitle icon={<Truck />} className="mb-5">
-          Order head
+          {t("vendors.purchaseDetail.head")}
         </CardTitle>
         {order ? (
           <KV
             columns={2}
             items={[
-              { label: "Record ID", value: id },
-              { label: "Number", value: order.Number },
-              { label: "Reference", value: order.Reference },
-              { label: "Vendor", value: purchaseVendorLabel(order) },
-              { label: "Order date", value: formatDate(order.OrderDate ?? order.Created) },
-              { label: "Delivery date", value: formatDate(order.DeliveryDate) === "–" ? null : formatDate(order.DeliveryDate) },
-              { label: "Modified", value: formatDate(order.Modified) === "–" ? null : formatDate(order.Modified) },
+              { label: t("vendors.purchases.recordId"), value: id },
+              { label: t("vendors.col.number"), value: order.Number },
+              { label: t("vendors.col.reference"), value: order.Reference },
+              { label: t("vendors.col.vendor"), value: purchaseVendorLabel(order) },
+              { label: t("vendors.col.orderDate"), value: formatDate(order.OrderDate ?? order.Created) },
               {
-                label: "Total",
+                label: t("vendors.field.deliveryDate"),
+                value: formatDate(order.DeliveryDate) === "–" ? null : formatDate(order.DeliveryDate),
+              },
+              {
+                label: t("vendors.field.modified"),
+                value: formatDate(order.Modified) === "–" ? null : formatDate(order.Modified),
+              },
+              {
+                label: t("vendors.field.total"),
                 value: order.TotalAmount != null ? formatAmount(order.TotalAmount, order.Currency || "ISK") : null,
               },
             ]}
@@ -278,15 +297,15 @@ export default function PurchaseDetailPage() {
 
       <Card className="overflow-hidden">
         <div className="flex items-center gap-2.5 border-b border-line px-5 py-4">
-          <CardTitle icon={<ClipboardList />}>Order lines</CardTitle>
+          <CardTitle icon={<ClipboardList />}>{t("vendors.purchaseDetail.lines")}</CardTitle>
         </div>
         <DataTable
           columns={lineColumns}
           rows={order?.Lines}
           rowKey={(l, i) => lineSeq(l) ?? i}
           loading={isLoading}
-          emptyTitle="No lines"
-          emptyBody="This purchase order has no lines."
+          emptyTitle={t("vendors.lines.emptyTitle")}
+          emptyBody={t("vendors.purchaseDetail.linesEmptyBody")}
         />
       </Card>
 
@@ -295,18 +314,18 @@ export default function PurchaseDetailPage() {
       <Dialog
         open={editingOrder}
         onClose={() => setEditingOrder(false)}
-        title={`Update order #${id}`}
-        subtitle="Sends a PATCH with just the fields below"
+        title={t("vendors.purchaseDetail.updateTitle", { id })}
+        subtitle={t("vendors.purchaseDetail.updateSubtitle")}
       >
         <form onSubmit={submitOrderEdit} className="space-y-4">
-          <Field label="Reference">
+          <Field label={t("vendors.col.reference")}>
             <Input
               value={orderDraft.Reference}
               onChange={(e) => setOrderDraft((d) => ({ ...d, Reference: e.target.value }))}
               autoFocus
             />
           </Field>
-          <Field label="Vendor number">
+          <Field label={t("vendors.field.number")}>
             <Input
               value={orderDraft.VendorNumber}
               onChange={(e) => setOrderDraft((d) => ({ ...d, VendorNumber: e.target.value }))}
@@ -314,10 +333,10 @@ export default function PurchaseDetailPage() {
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setEditingOrder(false)}>
-              Cancel
+              {t("ui.cancel")}
             </Button>
             <Button type="submit" loading={updateOrder.isPending}>
-              Save changes
+              {t("vendors.form.save")}
             </Button>
           </div>
         </form>
@@ -326,36 +345,36 @@ export default function PurchaseDetailPage() {
       <Dialog
         open={editingLine != null}
         onClose={() => setEditingLine(null)}
-        title={`Edit line ${editingLine ? (lineSeq(editingLine) ?? "") : ""}`}
-        subtitle={`Order #${id}`}
+        title={t("vendors.lines.edit", { n: editingLine ? (lineSeq(editingLine) ?? "") : "" })}
+        subtitle={t("vendors.purchaseDetail.orderNo", { id })}
       >
         <form onSubmit={submitLineEdit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Warehouse">
+            <Field label={t("vendors.col.warehouse")}>
               <Input
                 value={lineDraft.Warehouse}
                 onChange={(e) => setLineDraft((d) => ({ ...d, Warehouse: e.target.value }))}
               />
             </Field>
-            <Field label="Item code">
+            <Field label={t("vendors.field.itemCode")}>
               <Input
                 value={lineDraft.ItemCode}
                 onChange={(e) => setLineDraft((d) => ({ ...d, ItemCode: e.target.value }))}
               />
             </Field>
-            <Field label="External code">
+            <Field label={t("vendors.col.externalCode")}>
               <Input
                 value={lineDraft.ExternalCode}
                 onChange={(e) => setLineDraft((d) => ({ ...d, ExternalCode: e.target.value }))}
               />
             </Field>
-            <Field label="Reference">
+            <Field label={t("vendors.col.reference")}>
               <Input
                 value={lineDraft.Reference}
                 onChange={(e) => setLineDraft((d) => ({ ...d, Reference: e.target.value }))}
               />
             </Field>
-            <Field label="Quantity">
+            <Field label={t("vendors.field.quantity")}>
               <Input
                 inputMode="decimal"
                 value={lineDraft.Quantity}
@@ -366,10 +385,10 @@ export default function PurchaseDetailPage() {
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={() => setEditingLine(null)}>
-              Cancel
+              {t("ui.cancel")}
             </Button>
             <Button type="submit" loading={updateLine.isPending}>
-              Save line
+              {t("vendors.purchaseDetail.saveLine")}
             </Button>
           </div>
         </form>
@@ -378,14 +397,13 @@ export default function PurchaseDetailPage() {
       <ConfirmDialog
         open={deletingLine != null}
         onClose={() => setDeletingLine(null)}
-        title={`Remove line ${deletingLine ? (lineSeq(deletingLine) ?? "") : ""}?`}
-        body={
-          <>
-            This removes line <strong>{deletingLine ? lineCode(deletingLine) : ""}</strong> (qty{" "}
-            {formatNumber(deletingLine?.Quantity)}) from purchase order #{id}. This cannot be undone.
-          </>
-        }
-        confirmLabel="Remove line"
+        title={t("vendors.lines.removeTitle", { n: deletingLine ? (lineSeq(deletingLine) ?? "") : "" })}
+        body={t("vendors.purchaseDetail.removeLineBody", {
+          code: deletingLine ? lineCode(deletingLine) : "",
+          qty: formatNumber(deletingLine?.Quantity),
+          id,
+        })}
+        confirmLabel={t("vendors.purchaseDetail.removeLineConfirm")}
         loading={deleteLine.isPending}
         onConfirm={confirmLineDelete}
       />
@@ -393,14 +411,16 @@ export default function PurchaseDetailPage() {
       <ConfirmDialog
         open={confirmDeleteOrder}
         onClose={() => setConfirmDeleteOrder(false)}
-        title={`Delete purchase order #${id}?`}
+        title={t("vendors.purchaseDetail.deleteTitle", { id })}
         body={
-          <>
-            This permanently deletes purchase order <strong>{String(order?.Number ?? id)}</strong>
-            {order ? ` for ${purchaseVendorLabel(order)}` : ""} and all of its lines. This cannot be undone.
-          </>
+          order
+            ? t("vendors.purchaseDetail.deleteBodyVendor", {
+                number: String(order.Number ?? id),
+                vendor: purchaseVendorLabel(order),
+              })
+            : t("vendors.purchaseDetail.deleteBody", { number: id })
         }
-        confirmLabel="Delete order"
+        confirmLabel={t("vendors.purchaseDetail.deleteConfirm")}
         loading={deleteOrder.isPending}
         onConfirm={confirmOrderDelete}
       />

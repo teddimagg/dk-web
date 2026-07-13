@@ -33,7 +33,7 @@ export default function CompaniesPage() {
         <div className="space-y-3">
           {companies.length === 0 && (
             <Card className="p-8 text-center text-sm text-fog">
-              No companies connected yet — add your first token on the right.
+              {t("companies.empty")}
             </Card>
           )}
           {companies.map((c) => {
@@ -58,25 +58,25 @@ export default function CompaniesPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate font-semibold text-ink">{c.name}</p>
-                    {active && <Badge tone="green">Active</Badge>}
+                    {active && <Badge tone="green">{t("companies.active")}</Badge>}
                   </div>
                   <p className="mt-0.5 text-[13px] text-fog">
-                    Nº {c.number}
-                    {c.ssn ? ` · SSN ${c.ssn}` : ""} · token{" "}
-                    <span className="font-mono text-xs">{maskToken(c.token)}</span> · added{" "}
-                    {timeAgo(new Date(c.addedAt).toISOString())}
+                    {t("companies.meta", { number: c.number })}
+                    {c.ssn ? ` · ${t("companies.ssnShort")} ${c.ssn}` : ""} · {t("companies.tokenWord")}{" "}
+                    <span className="font-mono text-xs">{maskToken(c.token)}</span> ·{" "}
+                    {t("companies.addedAgo", { ago: timeAgo(new Date(c.addedAt).toISOString()) })}
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {!active && (
                     <Button variant="secondary" size="sm" onClick={() => setActive(c.id)}>
-                      <Check className="size-4" /> Make active
+                      <Check className="size-4" /> {t("companies.makeActive")}
                     </Button>
                   )}
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Disconnect ${c.name}`}
+                    aria-label={t("companies.disconnect", { name: c.name })}
                     onClick={() => setConfirming(c)}
                   >
                     <Trash2 className="size-4" />
@@ -89,7 +89,7 @@ export default function CompaniesPage() {
 
         <Card className="h-fit p-6">
           <CardTitle icon={<Building2 />} className="mb-5">
-            Connect another company
+            {t("companies.addAnother")}
           </CardTitle>
           <ConnectCompanyForm />
         </Card>
@@ -98,18 +98,16 @@ export default function CompaniesPage() {
       <ConfirmDialog
         open={!!confirming}
         onClose={() => setConfirming(null)}
-        title={`Disconnect ${confirming?.name}?`}
-        body={
-          <>
-            This removes the token for <strong>{confirming?.name}</strong> from this browser. No
-            data is deleted in dkPlus, and you can reconnect with the same token at any time.
-          </>
-        }
-        confirmLabel="Disconnect"
+        title={t("companies.confirmTitle", { name: confirming?.name ?? "" })}
+        body={t("companies.confirmBody", { name: confirming?.name ?? "" })}
+        confirmLabel={t("companies.confirmAction")}
         onConfirm={() => {
           if (confirming) {
             remove(confirming.id);
-            toast.success(`Disconnected ${confirming.name}`, "Reconnect any time with the same token.");
+            toast.success(
+              t("companies.disconnected", { name: confirming.name }),
+              t("companies.disconnectedDetail"),
+            );
           }
           setConfirming(null);
         }}

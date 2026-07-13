@@ -5,7 +5,7 @@ import { CalendarDays, ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
-import { usePeriod, periodLabel, type Period } from "@/lib/stores/period";
+import { usePeriod, usePeriodLabel, type Period } from "@/lib/stores/period";
 import { useT } from "@/lib/i18n";
 
 /**
@@ -16,6 +16,7 @@ import { useT } from "@/lib/i18n";
 export function PeriodPicker() {
   const { period, setPeriod } = usePeriod();
   const t = useT();
+  const pl = usePeriodLabel();
   const now = new Date().getFullYear();
   const years = [now, now - 1, now - 2];
   const [customOpen, setCustomOpen] = useState(false);
@@ -63,7 +64,7 @@ export function PeriodPicker() {
           aria-expanded={customOpen}
         >
           <CalendarDays className="size-3.5" />
-          {period.mode === "custom" ? periodLabel(period) : t("period.custom")}
+          {period.mode === "custom" ? pl(period) : t("period.custom")}
           <ChevronDown className={clsx("size-3 transition-transform", customOpen && "rotate-180")} />
         </button>
         {customOpen && (

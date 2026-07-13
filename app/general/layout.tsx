@@ -1,25 +1,23 @@
 "use client";
 
-import { NavTabs } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ModuleFrame } from "@/components/shell/ModuleFrame";
+import { useT } from "@/lib/i18n";
 
 export default function GeneralLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="General module" title="General">
-        <p className="mt-2 max-w-lg text-sm text-fog">
-          Employees, payment lookups, reference data and direct dkSystem table access.
-        </p>
-      </PageHeader>
-      <NavTabs
-        tabs={[
-          { href: "/general/employees", label: "Employees" },
-          { href: "/general/payments", label: "Payments" },
-          { href: "/general/reference", label: "Reference" },
-          { href: "/general/tables", label: "Table explorer" },
-        ]}
-      />
+    <ModuleFrame
+      href="/general"
+      title={t("general.title")}
+      intro={t("general.intro")}
+      tabs={[
+        { href: "/general/employees", label: t("general.tabs.employees") },
+        { href: "/general/payments", label: t("general.tabs.payments") },
+        { href: "/general/reference", label: t("general.tabs.reference") },
+        { href: "/general/tables", label: t("general.tabs.tables") },
+      ]}
+    >
       {children}
-    </div>
+    </ModuleFrame>
   );
 }

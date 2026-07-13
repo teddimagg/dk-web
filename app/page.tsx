@@ -24,7 +24,7 @@ import { StatSkeleton, Skeleton } from "@/components/ui/Skeleton";
 import { ErrorState } from "@/components/ui/EmptyState";
 import { useDkQuery } from "@/lib/hooks/useDk";
 import { useActiveCompany } from "@/lib/stores/companies";
-import { usePeriod, periodLabel } from "@/lib/stores/period";
+import { usePeriod, usePeriodLabel } from "@/lib/stores/period";
 import { usePeriodInvoices } from "@/lib/hooks/usePeriodInvoices";
 import { PeriodPicker } from "@/components/shell/PeriodPicker";
 import { formatAmount, formatCompact, formatInt, formatPercent, timeAgo } from "@/lib/format";
@@ -56,6 +56,7 @@ export default function OverviewPage() {
   const qc = useQueryClient();
   const { period, setPeriod } = usePeriod();
   const t = useT();
+  const pl = usePeriodLabel();
   const locale = useLocale((s) => s.locale);
 
   // Every invoice of the period, all pages (shared with Analytics).
@@ -188,7 +189,7 @@ export default function OverviewPage() {
           <div className="mt-4 flex flex-wrap items-center gap-2 text-[13px] text-fog">
             <PeriodPicker />
             <span className="rounded-full border border-line bg-white px-3 py-1 tnum">
-              {inv ? t("overview.invoicesIn", { n: formatInt(inv.length), period: periodLabel(period) }) : "…"}
+              {inv ? t("overview.invoicesIn", { n: formatInt(inv.length), period: pl(period) }) : "…"}
             </span>
             <span className="rounded-full border border-line bg-white px-3 py-1">
               {t("overview.updated", { ago: invoices.dataUpdatedAt ? timeAgo(new Date(invoices.dataUpdatedAt).toISOString()) : "…" })}
@@ -239,7 +240,7 @@ export default function OverviewPage() {
               </>
             ) : inv && inv.length === 0 ? (
               <p className="mt-3 text-[1.35rem] font-medium leading-snug text-ink/70">
-                {t("overview.insightEmpty", { period: periodLabel(period) })}
+                {t("overview.insightEmpty", { period: pl(period) })}
               </p>
             ) : invoices.error ? (
               <p className="mt-3 text-[1.35rem] font-medium leading-snug text-ink/70">
@@ -269,7 +270,7 @@ export default function OverviewPage() {
             <Activity className="size-6" />
           </span>
           <div>
-            <p className="font-medium text-ink">{t("overview.emptyTitle", { period: periodLabel(period) })}</p>
+            <p className="font-medium text-ink">{t("overview.emptyTitle", { period: pl(period) })}</p>
             <p className="mx-auto mt-1 max-w-sm text-sm text-fog">{t("overview.emptyBody")}</p>
           </div>
           <button
@@ -385,7 +386,7 @@ export default function OverviewPage() {
 
         {inv && inv.length === 0 ? (
           <Card className="grid place-items-center p-5 text-sm text-fog">
-            {t("overview.noInvoiceData", { period: periodLabel(period) })}
+            {t("overview.noInvoiceData", { period: pl(period) })}
           </Card>
         ) : m ? (
           <Card className="flex flex-col gap-3 p-5">

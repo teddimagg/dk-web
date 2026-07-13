@@ -6,11 +6,13 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardTitle } from "@/components/ui/Card";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { useDkQuery } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { TokenCompany } from "@/lib/api/types/platform";
 import { CreateTokenDialog } from "./CreateTokenDialog";
 
 /** GET /token/companies — companies this token's user can mint tokens for. */
 export function TokenCompaniesCard() {
+  const t = useT();
   const [creating, setCreating] = useState(false);
   const { data, isLoading, isFetching, error, refetch } = useDkQuery<TokenCompany[]>(
     ["token-companies"],
@@ -20,12 +22,14 @@ export function TokenCompaniesCard() {
   const columns: Column<TokenCompany>[] = [
     {
       key: "name",
-      header: "Company",
-      render: (c) => <span className="font-medium text-ink">{c.Name ?? "Unnamed company"}</span>,
+      header: t("tokens.companies.colCompany"),
+      render: (c) => (
+        <span className="font-medium text-ink">{c.Name ?? t("tokens.companies.unnamed")}</span>
+      ),
     },
     {
       key: "id",
-      header: "ID",
+      header: t("tokens.companies.colId"),
       render: (c) => <span className="font-mono text-xs text-fog">{c.ID ?? "–"}</span>,
     },
   ];
@@ -36,21 +40,23 @@ export function TokenCompaniesCard() {
         icon={<Users />}
         action={
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" aria-label="Refresh companies" onClick={() => refetch()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={t("tokens.companies.refreshAria")}
+              onClick={() => refetch()}
+            >
               <RefreshCw className={`size-4 ${isFetching ? "animate-spin" : ""}`} />
             </Button>
             <Button size="sm" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> Create token
+              <Plus className="size-4" /> {t("tokens.createToken")}
             </Button>
           </div>
         }
       >
-        Token&apos;s companies
+        {t("tokens.companies.title")}
       </CardTitle>
-      <p className="mt-2 text-[13px] text-fog">
-        Companies the current token&apos;s user has access to. Creating a token assigns it to one of
-        these companies.
-      </p>
+      <p className="mt-2 text-[13px] text-fog">{t("tokens.companies.body")}</p>
 
       <div className="mt-4">
         <DataTable
@@ -60,8 +66,8 @@ export function TokenCompaniesCard() {
           loading={isLoading}
           error={error}
           onRetry={() => refetch()}
-          emptyTitle="No companies returned"
-          emptyBody="dk answers this route with the companies your token's user may access — the list came back empty."
+          emptyTitle={t("tokens.companies.emptyTitle")}
+          emptyBody={t("tokens.companies.emptyBody")}
         />
       </div>
 

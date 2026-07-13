@@ -13,6 +13,7 @@ import { Field, Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
 import { formatDate, formatInt } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { Member } from "@/lib/api/types/members";
 import { MemberFormDialog } from "./_components/MemberFormDialog";
 
@@ -53,15 +54,16 @@ function buildQuery(f: Filters): string {
   return qs.toString();
 }
 
-function statusBadge(m: Member) {
-  if (m.Status?.Blocked) return <Badge tone="red">Blocked</Badge>;
-  if (m.Status?.Dead) return <Badge tone="ink">Deceased</Badge>;
-  if (m.Status?.Retired) return <Badge tone="amber">Retired</Badge>;
-  if (m.Status?.Disabled) return <Badge tone="neutral">Disabled</Badge>;
-  return <Badge tone="green">Active</Badge>;
+function statusBadge(m: Member, t: ReturnType<typeof useT>) {
+  if (m.Status?.Blocked) return <Badge tone="red">{t("members.status.blocked")}</Badge>;
+  if (m.Status?.Dead) return <Badge tone="ink">{t("members.status.deceased")}</Badge>;
+  if (m.Status?.Retired) return <Badge tone="amber">{t("members.status.retired")}</Badge>;
+  if (m.Status?.Disabled) return <Badge tone="neutral">{t("members.status.disabled")}</Badge>;
+  return <Badge tone="green">{t("members.status.active")}</Badge>;
 }
 
 export default function MembersPage() {
+  const t = useT();
   const router = useRouter();
   const prefetch = usePrefetch();
   const [page, setPage] = useState(1);
@@ -94,23 +96,23 @@ export default function MembersPage() {
   const columns: Column<Member>[] = [
     {
       key: "number",
-      header: "Number",
+      header: t("members.field.number"),
       render: (m) => <span className="font-medium text-ink tnum">{m.Number}</span>,
     },
-    { key: "name", header: "Name", render: (m) => m.Name || "–" },
-    { key: "city", header: "City", render: (m) => m.Address?.City || "–" },
-    { key: "email", header: "Email", render: (m) => m.ContactDetail?.Email || "–" },
-    { key: "group", header: "Group", render: (m) => m.Group || "–" },
+    { key: "name", header: t("members.field.name"), render: (m) => m.Name || "–" },
+    { key: "city", header: t("members.field.city"), render: (m) => m.Address?.City || "–" },
+    { key: "email", header: t("members.field.email"), render: (m) => m.ContactDetail?.Email || "–" },
+    { key: "group", header: t("members.field.group"), render: (m) => m.Group || "–" },
     {
       key: "points",
-      header: "Points",
+      header: t("members.field.points"),
       align: "right",
       render: (m) => <span className="tnum">{formatInt(m.Points)}</span>,
     },
-    { key: "status", header: "Status", render: statusBadge },
+    { key: "status", header: t("members.field.status"), render: (m) => statusBadge(m, t) },
     {
       key: "modified",
-      header: "Modified",
+      header: t("members.field.modified"),
       render: (m) => <span className="tnum">{formatDate(m.Modified)}</span>,
     },
   ];
@@ -131,21 +133,27 @@ export default function MembersPage() {
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search loaded page…"
-              aria-label="Search members"
+              placeholder={t("members.list.searchPlaceholder")}
+              aria-label={t("members.list.searchAria")}
               className="pl-9"
             />
           </div>
           <Button variant="secondary" size="sm" onClick={() => setShowFilters((v) => !v)}>
             <Filter className="size-4" />
-            Filters{appliedCount ? ` (${appliedCount})` : ""}
+            {t("members.list.filters")}
+            {appliedCount ? ` (${appliedCount})` : ""}
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => refetch()} aria-label="Refresh members">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            aria-label={t("members.list.refreshAria")}
+          >
             <RefreshCw className={clsx("size-4", isFetching && "animate-spin")} />
           </Button>
           <div className="ml-auto">
             <Button onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> New member
+              <Plus className="size-4" /> {t("members.list.new")}
             </Button>
           </div>
         </div>
@@ -153,22 +161,22 @@ export default function MembersPage() {
         {showFilters && (
           <div className="border-t border-line bg-haze/50 px-5 py-4">
             <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
-              <Field label="Group">
+              <Field label={t("members.field.group")}>
                 <Input value={draft.group} onChange={setDraftField("group")} placeholder="a1" />
               </Field>
-              <Field label="Zip code">
+              <Field label={t("members.field.zipcode")}>
                 <Input value={draft.zipcode} onChange={setDraftField("zipcode")} placeholder="101" />
               </Field>
-              <Field label="Country">
+              <Field label={t("members.field.country")}>
                 <Input value={draft.country} onChange={setDraftField("country")} placeholder="IS" />
               </Field>
-              <Field label="Salesperson">
+              <Field label={t("members.field.salesperson")}>
                 <Input value={draft.salesperson} onChange={setDraftField("salesperson")} placeholder="001" />
               </Field>
-              <Field label="Payment mode">
+              <Field label={t("members.field.paymentMode")}>
                 <Input value={draft.paymentmode} onChange={setDraftField("paymentmode")} placeholder="bm" />
               </Field>
-              <Field label="Modified since">
+              <Field label={t("members.filters.modifiedSince")}>
                 <Input type="date" value={draft.modified} onChange={setDraftField("modified")} />
               </Field>
             </div>
@@ -180,7 +188,7 @@ export default function MembersPage() {
                   onChange={setDraftField("blocked")}
                   className="size-4 accent-ink"
                 />
-                Blocked only
+                {t("members.filters.blockedOnly")}
               </label>
               <label className="flex cursor-pointer items-center gap-2 text-[13px] text-soot">
                 <input
@@ -189,7 +197,7 @@ export default function MembersPage() {
                   onChange={setDraftField("novat")}
                   className="size-4 accent-ink"
                 />
-                No VAT only
+                {t("members.filters.noVatOnly")}
               </label>
               <div className="ml-auto flex gap-2">
                 <Button
@@ -201,7 +209,7 @@ export default function MembersPage() {
                     setPage(1);
                   }}
                 >
-                  Clear
+                  {t("members.filters.clear")}
                 </Button>
                 <Button
                   variant="secondary"
@@ -211,7 +219,7 @@ export default function MembersPage() {
                     setPage(1);
                   }}
                 >
-                  Apply filters
+                  {t("members.filters.apply")}
                 </Button>
               </div>
             </div>
@@ -227,15 +235,11 @@ export default function MembersPage() {
           loading={isLoading || isFetching}
           error={error ?? null}
           onRetry={() => refetch()}
-          emptyTitle="No members found"
-          emptyBody={
-            search
-              ? "No members on this page match your search."
-              : "Adjust the filters or create the first member for this company."
-          }
+          emptyTitle={t("members.list.emptyTitle")}
+          emptyBody={search ? t("members.list.emptySearch") : t("members.list.emptyBody")}
           emptyAction={
             <Button size="sm" onClick={() => setCreating(true)}>
-              <Plus className="size-4" /> New member
+              <Plus className="size-4" /> {t("members.list.new")}
             </Button>
           }
           footer={<Pagination page={page} onPage={setPage} hasMore={hasMore} loading={isFetching} />}

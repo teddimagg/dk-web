@@ -6,6 +6,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { ContactUpsertBody, CustomerContact } from "@/lib/api/types/customers";
 
 interface FormState {
@@ -47,6 +48,7 @@ export function ContactDialog({
   const [form, setForm] = useState<FormState>(empty);
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const toast = useToast();
+  const t = useT();
 
   useEffect(() => {
     if (open) {
@@ -77,8 +79,8 @@ export function ContactDialog({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: typeof errors = {};
-    if (!editing && !form.Number.trim()) errs.Number = "Contact number is required";
-    if (!form.Name.trim()) errs.Name = "Name is required";
+    if (!editing && !form.Number.trim()) errs.Number = t("customers.contacts.numberRequired");
+    if (!form.Name.trim()) errs.Name = t("customers.dialog.nameRequired");
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -102,13 +104,16 @@ export function ContactDialog({
       {
         onSuccess: () => {
           toast.success(
-            editing ? "Contact updated" : "Contact added",
-            `${form.Name} was saved on customer ${customerNumber}.`,
+            editing ? t("customers.contacts.updated") : t("customers.contacts.added"),
+            t("customers.contacts.savedDetail", { name: form.Name, number: customerNumber }),
           );
           onClose();
         },
         onError: (err) =>
-          toast.error(editing ? "Could not update contact" : "Could not add contact", err.message),
+          toast.error(
+            editing ? t("customers.contacts.updateFailed") : t("customers.contacts.addFailed"),
+            err.message,
+          ),
       },
     );
   }

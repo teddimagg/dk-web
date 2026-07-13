@@ -14,6 +14,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 import { dkFetchBlob, downloadBlob } from "@/lib/api/client";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { useActiveCompany } from "@/lib/stores/companies";
 import { formatAmount, formatNumber, timeAgo } from "@/lib/format";
 import {
@@ -34,6 +35,7 @@ export default function ProductsCataloguePage() {
   const router = useRouter();
   const prefetch = usePrefetch();
   const toast = useToast();
+  const t = useT();
   const company = useActiveCompany();
 
   const [page, setPage] = useState(1);
@@ -85,9 +87,9 @@ export default function ProductsCataloguePage() {
       // Fetch-all route (GET /Product) with the current group/warehouse filters.
       const blob = await dkFetchBlob(`/Product${qs}`, { token: company.token });
       downloadBlob(blob, `products-${new Date().toISOString().slice(0, 10)}.json`);
-      toast.success("Export ready", "The full product list was downloaded as JSON.");
+      toast.success(t("products.exportReady"), t("products.exportReadyDetail"));
     } catch (err) {
-      toast.error("Export failed", err instanceof Error ? err.message : undefined);
+      toast.error(t("products.exportFailed"), err instanceof Error ? err.message : undefined);
     } finally {
       setExporting(false);
     }
@@ -96,17 +98,17 @@ export default function ProductsCataloguePage() {
   const columns: Column<Product>[] = [
     {
       key: "code",
-      header: "Item code",
+      header: t("products.itemCode"),
       render: (p) => (
         <span className="flex items-center gap-2">
           <span className="font-mono text-xs font-medium">{p.ItemCode}</span>
-          {p.Inactive && <Badge tone="red">Inactive</Badge>}
+          {p.Inactive && <Badge tone="red">{t("products.inactive")}</Badge>}
         </span>
       ),
     },
     {
       key: "desc",
-      header: "Description",
+      header: t("products.description"),
       render: (p) => (
         <span className="block max-w-[320px]">
           <span className="block truncate font-medium">{p.Description || "–"}</span>
@@ -116,24 +118,24 @@ export default function ProductsCataloguePage() {
     },
     {
       key: "group",
-      header: "Group",
+      header: t("products.group"),
       render: (p) => (p.Group ? <Badge>{p.Group}</Badge> : <span className="text-mist">–</span>),
     },
     {
       key: "qty",
-      header: "In stock",
+      header: t("products.inStock"),
       align: "right",
       render: (p) => <span className="tnum">{formatNumber(p.TotalQuantityInWarehouse)}</span>,
     },
     {
       key: "price",
-      header: "Unit price",
+      header: t("products.unitPrice"),
       align: "right",
       render: (p) => <span className="tnum font-medium">{formatAmount(p.UnitPrice1, p.CurrencyCode || "ISK")}</span>,
     },
     {
       key: "modified",
-      header: "Modified",
+      header: t("products.modifiedAt"),
       render: (p) => <span className="text-fog">{timeAgo(p.RecordModified)}</span>,
     },
   ];
@@ -151,10 +153,10 @@ export default function ProductsCataloguePage() {
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-mist" />
             <Input
               className="w-64 pl-9"
-              placeholder="Search products…"
+              placeholder={t("products.searchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              aria-label="Search products"
+              aria-label={t("products.searchAria")}
             />
           </div>
           <Select
@@ -164,9 +166,9 @@ export default function ProductsCataloguePage() {
               setGroup(e.target.value);
               setPage(1);
             }}
-            aria-label="Filter by product group"
+            aria-label={t("products.filterByGroupAria")}
           >
-            <option value="">All groups</option>
+            <option value="">{t("products.allGroups")}</option>
             {(groups.data ?? []).map((g, i) => {
               const code = productGroupCode(g);
               if (!code) return null;
@@ -178,7 +180,7 @@ export default function ProductsCataloguePage() {
             })}
           </Select>
           <div className="flex items-center gap-1.5">
-            <span className="text-[13px] text-fog">Modified since</span>
+            <span className="text-[13px] text-fog">{t("products.modifiedSince")}</span>
             <Input
               type="date"
               className="w-40"
@@ -187,7 +189,7 @@ export default function ProductsCataloguePage() {
                 setModifiedSince(e.target.value);
                 setPage(1);
               }}
-              aria-label="Only show products modified since this date"
+              aria-label={t("products.modifiedSinceAria")}
             />
             {modifiedSince && (
               <button
@@ -195,7 +197,7 @@ export default function ProductsCataloguePage() {
                   setModifiedSince("");
                   setPage(1);
                 }}
-                aria-label="Clear date filter"
+                aria-label={t("products.clearDateFilter")}
                 className="grid size-7 cursor-pointer place-items-center rounded-full text-mist transition-colors hover:bg-haze hover:text-ink"
               >
                 <X className="size-3.5" />
@@ -203,14 +205,14 @@ export default function ProductsCataloguePage() {
             )}
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={() => active.refetch()} aria-label="Refresh list">
+            <Button variant="ghost" size="sm" onClick={() => active.refetch()} aria-label={t("products.refreshList")}>
               <RefreshCw className={clsx("size-4", active.isFetching && "animate-spin")} />
             </Button>
             <Button variant="secondary" size="sm" onClick={exportJson} loading={exporting}>
-              <Download className="size-4" /> Export JSON
+              <Download className="size-4" /> {t("products.exportJson")}
             </Button>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-4" /> New product
+              <Plus className="size-4" /> {t("products.newProduct")}
             </Button>
           </div>
         </div>
@@ -218,7 +220,7 @@ export default function ProductsCataloguePage() {
         {warehouseChips.length > 0 && (
           <div className="flex flex-wrap items-center gap-2 border-b border-line px-5 py-3">
             <span className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-mist">
-              <Warehouse className="size-3.5" /> Warehouses
+              <Warehouse className="size-3.5" /> {t("products.warehouses")}
             </span>
             {warehouseChips.map((w) => {
               const isActive = warehouse === w.code;
@@ -245,7 +247,7 @@ export default function ProductsCataloguePage() {
                 }}
                 className="cursor-pointer text-xs text-fog underline hover:text-ink"
               >
-                Clear
+                {t("products.clearFilter")}
               </button>
             )}
           </div>
@@ -260,16 +262,14 @@ export default function ProductsCataloguePage() {
           onRetry={() => active.refetch()}
           onRowClick={(p) => router.push(`/products/${encodeURIComponent(p.ItemCode)}`)}
           onRowHover={(p) => prefetch(["product", p.ItemCode], `/Product/${encodeURIComponent(p.ItemCode)}`)}
-          emptyTitle={searching ? "No products match" : "No products"}
+          emptyTitle={searching ? t("products.emptySearchTitle") : t("products.emptyTitle")}
           emptyBody={
-            searching
-              ? `Nothing found for "${debouncedSearch}". Try a different search term.`
-              : "No products match the current filters."
+            searching ? t("products.emptySearchBody", { term: debouncedSearch }) : t("products.emptyBody")
           }
           emptyAction={
             !searching ? (
               <Button size="sm" onClick={() => setCreateOpen(true)}>
-                <Plus className="size-4" /> New product
+                <Plus className="size-4" /> {t("products.newProduct")}
               </Button>
             ) : undefined
           }
@@ -277,7 +277,10 @@ export default function ProductsCataloguePage() {
             searching ? (
               <div className="flex items-center gap-2 border-t border-line px-4 py-3 text-[13px] text-fog">
                 <Package className="size-4" />
-                {rows?.length ?? 0} search result{(rows?.length ?? 0) === 1 ? "" : "s"} for “{debouncedSearch}”
+                {t((rows?.length ?? 0) === 1 ? "products.searchResults1" : "products.searchResultsN", {
+                  n: rows?.length ?? 0,
+                  term: debouncedSearch,
+                })}
               </div>
             ) : (
               <Pagination page={page} onPage={setPage} hasMore={hasMore} loading={active.isFetching} />

@@ -7,6 +7,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { Field, Input } from "@/components/ui/Input";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import type { Customer, CustomerUpsertBody } from "@/lib/api/types/customers";
 
 interface FormState {
@@ -68,6 +69,7 @@ export function CustomerDialog({
   const [errors, setErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const toast = useToast();
   const router = useRouter();
+  const t = useT();
 
   useEffect(() => {
     if (open) {
@@ -88,8 +90,8 @@ export function CustomerDialog({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const errs: typeof errors = {};
-    if (!editing && !form.Number.trim()) errs.Number = "Customer number is required";
-    if (!form.Name.trim()) errs.Name = "Name is required";
+    if (!editing && !form.Number.trim()) errs.Number = t("customers.dialog.numberRequired");
+    if (!form.Name.trim()) errs.Name = t("customers.dialog.nameRequired");
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
 
@@ -108,15 +110,21 @@ export function CustomerDialog({
       {
         onSuccess: () => {
           if (editing) {
-            toast.success("Customer updated", `${form.Name} was saved.`);
+            toast.success(t("customers.toast.updated"), t("customers.toast.updatedDetail", { name: form.Name }));
           } else {
-            toast.success("Customer created", `${form.Name} (${form.Number}) was added.`);
+            toast.success(
+              t("customers.toast.created"),
+              t("customers.toast.createdDetail", { name: form.Name, number: form.Number }),
+            );
             router.push(`/customers/${encodeURIComponent(form.Number.trim())}`);
           }
           onClose();
         },
         onError: (err) =>
-          toast.error(editing ? "Could not update customer" : "Could not create customer", err.message),
+          toast.error(
+            editing ? t("customers.toast.updateFailed") : t("customers.toast.createFailed"),
+            err.message,
+          ),
       },
     );
   }
@@ -125,59 +133,68 @@ export function CustomerDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={editing ? `Edit ${customer?.Name || customer?.Number}` : "New customer"}
+      title={
+        editing
+          ? t("customers.dialog.editTitle", { name: customer?.Name || customer?.Number || "" })
+          : t("customers.dialog.newTitle")
+      }
       subtitle={
         editing
-          ? `PUT /customer/${customer?.Number} — only filled fields are sent`
-          : "Creates the customer directly in dkPlus"
+          ? t("customers.dialog.editSubtitle", { number: customer?.Number ?? "" })
+          : t("customers.dialog.newSubtitle")
       }
       wide
     >
       <form onSubmit={submit} className="space-y-4">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Number" required error={errors.Number}>
+          <Field label={t("customers.field.number")} required error={errors.Number}>
             <Input
               value={form.Number}
               onChange={set("Number")}
-              placeholder="e.g. 1906083010"
+              placeholder={t("customers.dialog.numberPlaceholder")}
               disabled={editing}
               autoFocus={!editing}
             />
           </Field>
-          <Field label="Name" required error={errors.Name}>
-            <Input value={form.Name} onChange={set("Name")} placeholder="Full name" autoFocus={editing} />
+          <Field label={t("customers.field.name")} required error={errors.Name}>
+            <Input
+              value={form.Name}
+              onChange={set("Name")}
+              placeholder={t("customers.dialog.namePlaceholder")}
+              autoFocus={editing}
+            />
           </Field>
-          <Field label="SSN" hint="kennitala">
+          <Field label={t("customers.field.ssn")} hint={t("customers.dialog.ssnHint")}>
             <Input value={form.SSNumber} onChange={set("SSNumber")} />
           </Field>
-          <Field label="Email">
+          <Field label={t("customers.field.email")}>
             <Input type="email" value={form.Email} onChange={set("Email")} />
           </Field>
-          <Field label="Address">
+          <Field label={t("customers.field.address")}>
             <Input value={form.Address1} onChange={set("Address1")} />
           </Field>
-          <Field label="Address 2">
+          <Field label={t("customers.field.address2")}>
             <Input value={form.Address2} onChange={set("Address2")} />
           </Field>
-          <Field label="City">
+          <Field label={t("customers.field.city")}>
             <Input value={form.City} onChange={set("City")} />
           </Field>
-          <Field label="Zip code">
+          <Field label={t("customers.field.zip")}>
             <Input value={form.ZipCode} onChange={set("ZipCode")} />
           </Field>
-          <Field label="Phone">
+          <Field label={t("customers.field.phone")}>
             <Input value={form.Phone} onChange={set("Phone")} />
           </Field>
-          <Field label="Mobile">
+          <Field label={t("customers.field.mobile")}>
             <Input value={form.PhoneMobile} onChange={set("PhoneMobile")} />
           </Field>
         </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
+            {t("ui.cancel")}
           </Button>
           <Button type="submit" loading={save.isPending}>
-            {editing ? "Save changes" : "Create customer"}
+            {editing ? t("customers.dialog.saveChanges") : t("customers.dialog.create")}
           </Button>
         </div>
       </form>

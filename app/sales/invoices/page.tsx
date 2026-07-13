@@ -14,6 +14,7 @@ import { Pagination } from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation, useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
 import { formatAmount, formatDate } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { SalesInvoice } from "@/lib/api/types/sales";
 import { InvoiceCreateDialog } from "../_components/InvoiceCreateDialog";
 import { SettledBadge } from "../_components/SettledBadge";
@@ -23,6 +24,7 @@ const SIZE = 40;
 export default function InvoicesPage() {
   const router = useRouter();
   const prefetch = usePrefetch();
+  const t = useT();
 
   const [page, setPage] = useState(1);
   const [date, setDate] = useState("");
@@ -40,16 +42,16 @@ export default function InvoicesPage() {
   if (refActive) {
     path = `/sales/invoice/reference/${encodeURIComponent(refActive)}/${page}/${SIZE}`;
     key = ["sales-invoices", "reference", refActive, page];
-    source = `Invoices with reference “${refActive}”`;
+    source = t("sales.invoices.sourceReference", { ref: refActive });
   } else if (date) {
     path = `/sales/invoice/date/${date}/${page}/${SIZE}`;
     key = ["sales-invoices", "date", date, page];
-    source = `Invoices dated on or after ${formatDate(date)}`;
+    source = t("sales.invoices.sourceDate", { date: formatDate(date) });
   } else {
     const q = spActive ? `?salesPerson=${encodeURIComponent(spActive)}` : "";
     path = `/sales/invoice/page/${page}/${SIZE}${q}`;
     key = ["sales-invoices", "page", page, spActive];
-    source = spActive ? `Invoices by salesperson “${spActive}”` : "";
+    source = spActive ? t("sales.invoices.sourceSalesperson", { sp: spActive }) : "";
   }
 
   const { data, isLoading, isFetching, error, refetch } = useDkQuery<SalesInvoice[]>(key, path, {
@@ -74,11 +76,11 @@ export default function InvoicesPage() {
   }
 
   const columns: Column<SalesInvoice>[] = [
-    { key: "number", header: "Number", width: "90px", render: (r) => <span className="font-medium text-ink tnum">{r.Number}</span> },
-    { key: "date", header: "Date", width: "110px", render: (r) => <span className="tnum">{formatDate(r.InvoiceDate)}</span> },
+    { key: "number", header: t("sales.col.number"), width: "90px", render: (r) => <span className="font-medium text-ink tnum">{r.Number}</span> },
+    { key: "date", header: t("sales.col.date"), width: "110px", render: (r) => <span className="tnum">{formatDate(r.InvoiceDate)}</span> },
     {
       key: "customer",
-      header: "Customer",
+      header: t("sales.col.customer"),
       render: (r) => (
         <div className="min-w-0">
           <p className="truncate font-medium text-ink">{r.CName || "–"}</p>
@@ -88,7 +90,7 @@ export default function InvoicesPage() {
     },
     {
       key: "total",
-      header: "Total w/ tax",
+      header: t("sales.col.totalWithTax"),
       align: "right",
       render: (r) => (
         <span className={clsx("tnum font-medium", (r.TotalAmountWithTax ?? 0) < 0 ? "text-danger" : "text-ink")}>
@@ -96,9 +98,9 @@ export default function InvoicesPage() {
         </span>
       ),
     },
-    { key: "settled", header: "Settled", align: "center", render: (r) => <SettledBadge invoice={r} /> },
-    { key: "sp", header: "Salesperson", width: "110px", render: (r) => r.SalePerson || "–" },
-    { key: "voucher", header: "Voucher", width: "100px", render: (r) => <span className="tnum">{r.Voucher || "–"}</span> },
+    { key: "settled", header: t("sales.col.settled"), align: "center", render: (r) => <SettledBadge invoice={r} /> },
+    { key: "sp", header: t("sales.col.salesperson"), width: "110px", render: (r) => r.SalePerson || "–" },
+    { key: "voucher", header: t("sales.col.voucher"), width: "100px", render: (r) => <span className="tnum">{r.Voucher || "–"}</span> },
   ];
 
   return (
@@ -112,42 +114,42 @@ export default function InvoicesPage() {
               setDate(e.target.value);
               setPage(1);
             }}
-            aria-label="Show invoices dated on or after"
-            title="Show invoices dated on or after this date"
+            aria-label={t("sales.invoices.dateAria")}
+            title={t("sales.invoices.dateTitle")}
             className="w-40"
           />
           <Input
             value={refInput}
             onChange={(e) => setRefInput(e.target.value)}
-            placeholder="Reference…"
-            aria-label="Look up invoices by reference"
+            placeholder={t("sales.invoices.refPlaceholder")}
+            aria-label={t("sales.invoices.refAria")}
             className="w-40"
           />
           <Input
             value={spInput}
             onChange={(e) => setSpInput(e.target.value)}
-            placeholder="Salesperson…"
-            aria-label="Filter by salesperson"
+            placeholder={t("sales.invoices.spPlaceholder")}
+            aria-label={t("sales.invoices.spAria")}
             className="w-36"
           />
           <Button type="submit" variant="secondary" size="sm">
-            <Search className="size-4" /> Apply
+            <Search className="size-4" /> {t("sales.filters.apply")}
           </Button>
           {(date || refActive || spActive) && (
             <Button type="button" variant="ghost" size="sm" onClick={clearFilters}>
-              Clear
+              {t("sales.filters.clear")}
             </Button>
           )}
           <span className="ml-auto flex items-center gap-2">
-            {isFetching && <Loader2 className="size-4 animate-spin text-mist" aria-label="Refreshing" />}
-            <Button type="button" variant="ghost" size="sm" onClick={() => refetch()} aria-label="Refresh list">
+            {isFetching && <Loader2 className="size-4 animate-spin text-mist" aria-label={t("sales.refreshing")} />}
+            <Button type="button" variant="ghost" size="sm" onClick={() => refetch()} aria-label={t("sales.refreshList")}>
               <RefreshCw className="size-4" />
             </Button>
             <Button type="button" variant="ghost" size="sm" onClick={() => setDeleteOpen(true)}>
-              <Trash2 className="size-4" /> Delete by reference
+              <Trash2 className="size-4" /> {t("sales.invoices.deleteByReference")}
             </Button>
             <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
-              <Plus className="size-4" /> New invoice
+              <Plus className="size-4" /> {t("sales.invoices.new")}
             </Button>
           </span>
         </form>
@@ -165,12 +167,8 @@ export default function InvoicesPage() {
           onRowHover={(r) =>
             r.Number && prefetch(["sales-invoice", r.Number], `/sales/invoice/${encodeURIComponent(r.Number)}`)
           }
-          emptyTitle="No invoices found"
-          emptyBody={
-            refActive
-              ? "No invoice carries this reference — check the spelling or clear the filter."
-              : "Try another date or page, or create the first invoice."
-          }
+          emptyTitle={t("sales.invoices.emptyTitle")}
+          emptyBody={refActive ? t("sales.invoices.emptyRef") : t("sales.invoices.emptyBody")}
           footer={<Pagination page={page} onPage={setPage} hasMore={hasMore} loading={isFetching} />}
         />
       </Card>
@@ -188,6 +186,7 @@ export default function InvoicesPage() {
  */
 function DeleteByReferenceDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const toast = useToast();
+  const t = useT();
   const [ref, setRef] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
@@ -195,7 +194,7 @@ function DeleteByReferenceDialog({ open, onClose }: { open: boolean; onClose: ()
 
   function requestDelete(e: React.FormEvent) {
     e.preventDefault();
-    if (!ref.trim()) return setError("Reference is required");
+    if (!ref.trim()) return setError(t("sales.deleteRef.required"));
     setError(null);
     setConfirming(true);
   }
@@ -205,14 +204,14 @@ function DeleteByReferenceDialog({ open, onClose }: { open: boolean; onClose: ()
       { path: `/sales/invoice/reference/${encodeURIComponent(ref.trim())}?delete=true`, method: "GET" },
       {
         onSuccess: () => {
-          toast.success(`Invoices with reference “${ref.trim()}” deleted`);
+          toast.success(t("sales.deleteRef.deleted", { ref: ref.trim() }));
           setConfirming(false);
           setRef("");
           onClose();
         },
         onError: (e) => {
           setConfirming(false);
-          toast.error("Delete by reference failed", e.message);
+          toast.error(t("sales.deleteRef.failed"), e.message);
         },
       },
     );
@@ -223,26 +222,23 @@ function DeleteByReferenceDialog({ open, onClose }: { open: boolean; onClose: ()
       <Dialog
         open={open}
         onClose={onClose}
-        title="Delete invoices by reference"
-        subtitle="Removes every invoice carrying the given reference"
+        title={t("sales.deleteRef.title")}
+        subtitle={t("sales.deleteRef.subtitle")}
       >
         <form onSubmit={requestDelete} className="space-y-4">
           <div className="flex items-start gap-2 rounded-2xl border border-amber/30 bg-amber-soft p-3 text-[13px] leading-relaxed text-soot">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-amber" />
-            <span>
-              This is a bulk, irreversible action: <em>all</em> invoices with this reference are
-              deleted. dk performs it through the reference lookup endpoint.
-            </span>
+            <span>{t("sales.deleteRef.warning")}</span>
           </div>
-          <Field label="Reference" required error={error ?? undefined}>
-            <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. SK-12345" autoFocus />
+          <Field label={t("sales.kv.reference")} required error={error ?? undefined}>
+            <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder={t("sales.deleteRef.placeholder")} autoFocus />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="secondary" onClick={onClose}>
-              Cancel
+              {t("ui.cancel")}
             </Button>
             <Button type="submit" variant="danger" loading={del.isPending}>
-              <Trash2 className="size-4" /> Delete…
+              <Trash2 className="size-4" /> {t("sales.deleteRef.deleteBtn")}
             </Button>
           </div>
         </form>
@@ -251,14 +247,9 @@ function DeleteByReferenceDialog({ open, onClose }: { open: boolean; onClose: ()
       <ConfirmDialog
         open={confirming}
         onClose={() => setConfirming(false)}
-        title={`Delete all invoices with reference “${ref.trim()}”?`}
-        body={
-          <>
-            Every invoice carrying reference <strong>{ref.trim()}</strong> will be deleted in dkPlus.
-            This cannot be undone.
-          </>
-        }
-        confirmLabel="Delete invoices"
+        title={t("sales.deleteRef.confirmTitle", { ref: ref.trim() })}
+        body={t("sales.deleteRef.confirmBody", { ref: ref.trim() })}
+        confirmLabel={t("sales.deleteRef.confirmAction")}
         loading={del.isPending}
         onConfirm={doDelete}
       />

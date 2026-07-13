@@ -10,6 +10,7 @@ import { Field, Textarea } from "@/components/ui/Input";
 import { Tabs } from "@/components/ui/Tabs";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation, useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatAmount, formatDate } from "@/lib/format";
 import type { VendorInvoice, VendorInvoiceApprovalBody } from "@/lib/api/types/vendors";
 import { invoiceAmount, invoiceId, invoiceNumber, invoiceVendorLabel } from "../_components/helpers";
@@ -28,6 +29,7 @@ export default function ApprovalsPage() {
   const [selected, setSelected] = useState<number | null>(null);
   const toast = useToast();
   const prefetch = usePrefetch();
+  const t = useT();
 
   const pending = useDkQuery<VendorInvoice[]>(
     ["vendor-invoices", "my", "unapproved"],
@@ -60,14 +62,19 @@ export default function ApprovalsPage() {
       {
         onSuccess: () => {
           toast.success(
-            approving ? "Invoice approved" : "Invoice rejected",
-            `Invoice ${invoiceNumber(pendingAction.invoice)} was ${approving ? "approved" : "rejected"}.`,
+            approving ? t("vendors.approvals.approvedToast") : t("vendors.approvals.rejectedToast"),
+            approving
+              ? t("vendors.approvals.approvedDetail", { number: invoiceNumber(pendingAction.invoice) })
+              : t("vendors.approvals.rejectedDetail", { number: invoiceNumber(pendingAction.invoice) }),
           );
           setPendingAction(null);
           setComment("");
         },
         onError: (err) =>
-          toast.error(approving ? "Could not approve invoice" : "Could not reject invoice", err.message),
+          toast.error(
+            approving ? t("vendors.approvals.approveFailed") : t("vendors.approvals.rejectFailed"),
+            err.message,
+          ),
       },
     );
   }
@@ -75,17 +82,17 @@ export default function ApprovalsPage() {
   const baseColumns: Column<VendorInvoice>[] = [
     {
       key: "id",
-      header: "ID",
+      header: t("vendors.col.id"),
       width: "90px",
       render: (inv) => <span className="font-mono text-xs text-fog">{invoiceId(inv) ?? "–"}</span>,
     },
-    { key: "number", header: "Number", render: (inv) => <span className="font-medium">{invoiceNumber(inv)}</span> },
-    { key: "vendor", header: "Vendor", render: (inv) => invoiceVendorLabel(inv) },
-    { key: "date", header: "Date", width: "110px", render: (inv) => formatDate(inv.Date ?? inv.Created) },
-    { key: "due", header: "Due date", width: "110px", render: (inv) => formatDate(inv.DueDate) },
+    { key: "number", header: t("vendors.col.number"), render: (inv) => <span className="font-medium">{invoiceNumber(inv)}</span> },
+    { key: "vendor", header: t("vendors.col.vendor"), render: (inv) => invoiceVendorLabel(inv) },
+    { key: "date", header: t("vendors.col.date"), width: "110px", render: (inv) => formatDate(inv.Date ?? inv.Created) },
+    { key: "due", header: t("vendors.col.due"), width: "110px", render: (inv) => formatDate(inv.DueDate) },
     {
       key: "amount",
-      header: "Amount",
+      header: t("vendors.col.amount"),
       align: "right",
       render: (inv) => <span className="tnum font-medium">{formatAmount(invoiceAmount(inv), inv.Currency || "ISK")}</span>,
     },
@@ -108,7 +115,7 @@ export default function ApprovalsPage() {
               setPendingAction({ invoice: inv, action: 0 });
             }}
           >
-            <Check className="size-4" /> Approve
+            <Check className="size-4" /> {t("vendors.approvals.approve")}
           </Button>
           <Button
             variant="danger"
@@ -118,7 +125,7 @@ export default function ApprovalsPage() {
               setPendingAction({ invoice: inv, action: 2 });
             }}
           >
-            <X className="size-4" /> Reject
+            <X className="size-4" /> {t("vendors.approvals.reject")}
           </Button>
         </span>
       ),
@@ -129,9 +136,9 @@ export default function ApprovalsPage() {
     ...baseColumns,
     {
       key: "status",
-      header: "Status",
+      header: t("vendors.col.status"),
       align: "right",
-      render: (inv) => approvalBadge(inv.ApprovalStatus ?? inv.Status ?? 0),
+      render: (inv) => approvalBadge(inv.ApprovalStatus ?? inv.Status ?? 0, t),
     },
   ];
 
@@ -142,13 +149,13 @@ export default function ApprovalsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Tabs
           tabs={[
-            { id: "pending", label: "My pending", count: pending.data?.length },
-            { id: "approved", label: "My approved", count: approved.data?.length },
+            { id: "pending", label: t("vendors.approvals.myPending"), count: pending.data?.length },
+            { id: "approved", label: t("vendors.approvals.myApproved"), count: approved.data?.length },
           ]}
           active={tab}
           onChange={setTab}
         />
-        <Button variant="ghost" size="sm" onClick={() => active.refetch()} aria-label="Refresh approvals">
+        <Button variant="ghost" size="sm" onClick={() => active.refetch()} aria-label={t("vendors.approvals.refreshAria")}>
           <RefreshCw className={active.isFetching ? "size-4 animate-spin" : "size-4"} />
         </Button>
       </div>
@@ -162,8 +169,8 @@ export default function ApprovalsPage() {
             loading={pending.isLoading || (pending.isFetching && !pending.data)}
             error={pending.error}
             onRetry={pending.refetch}
-            emptyTitle="Nothing waiting for you"
-            emptyBody="Vendor invoices assigned to you for approval will appear here."
+            emptyTitle={t("vendors.approvals.pendingEmptyTitle")}
+            emptyBody={t("vendors.approvals.pendingEmptyBody")}
             onRowClick={(inv) => {
               const id = invoiceId(inv);
               if (id != null) setSelected(id);
@@ -186,8 +193,8 @@ export default function ApprovalsPage() {
             loading={approved.isLoading || (approved.isFetching && !approved.data)}
             error={approved.error}
             onRetry={approved.refetch}
-            emptyTitle="No approved invoices"
-            emptyBody="Invoices you have approved will appear here."
+            emptyTitle={t("vendors.approvals.approvedEmptyTitle")}
+            emptyBody={t("vendors.approvals.approvedEmptyBody")}
             onRowClick={(inv) => {
               const id = invoiceId(inv);
               if (id != null) setSelected(id);
@@ -206,8 +213,8 @@ export default function ApprovalsPage() {
         onClose={() => setPendingAction(null)}
         title={
           pendingAction?.action === 0
-            ? `Approve invoice ${pendingAction ? invoiceNumber(pendingAction.invoice) : ""}?`
-            : `Reject invoice ${pendingAction ? invoiceNumber(pendingAction.invoice) : ""}?`
+            ? t("vendors.approvals.approveTitle", { number: pendingAction ? invoiceNumber(pendingAction.invoice) : "" })
+            : t("vendors.approvals.rejectTitle", { number: pendingAction ? invoiceNumber(pendingAction.invoice) : "" })
         }
         subtitle={pendingAction ? invoiceVendorLabel(pendingAction.invoice) : undefined}
       >
@@ -219,35 +226,37 @@ export default function ApprovalsPage() {
           className="space-y-4"
         >
           <p className="text-sm text-fog">
-            {pendingAction?.action === 0
-              ? "This marks the invoice as approved by you."
-              : "This marks the invoice as denied by you."}{" "}
-            Amount:{" "}
+            {pendingAction?.action === 0 ? t("vendors.approvals.approveBody") : t("vendors.approvals.rejectBody")}{" "}
+            {t("vendors.approvals.amount")}{" "}
             <span className="font-semibold text-ink tnum">
               {pendingAction
                 ? formatAmount(invoiceAmount(pendingAction.invoice), pendingAction.invoice.Currency || "ISK")
                 : ""}
             </span>
           </p>
-          <Field label="Comment" hint="optional">
+          <Field label={t("vendors.field.comment")} hint={t("vendors.form.optional")}>
             <Textarea
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={3}
-              placeholder={pendingAction?.action === 0 ? "Looks good…" : "Reason for rejection…"}
+              placeholder={
+                pendingAction?.action === 0
+                  ? t("vendors.approvals.approvePlaceholder")
+                  : t("vendors.approvals.rejectPlaceholder")
+              }
               autoFocus
             />
           </Field>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" onClick={() => setPendingAction(null)}>
-              Cancel
+              {t("ui.cancel")}
             </Button>
             <Button
               type="submit"
               variant={pendingAction?.action === 0 ? "primary" : "danger"}
               loading={setApproval.isPending}
             >
-              {pendingAction?.action === 0 ? "Approve invoice" : "Reject invoice"}
+              {pendingAction?.action === 0 ? t("vendors.approvals.approveConfirm") : t("vendors.approvals.rejectConfirm")}
             </Button>
           </div>
         </form>

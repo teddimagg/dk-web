@@ -1,21 +1,13 @@
 "use client";
 
-import { NavTabs } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ModuleFrame } from "@/components/shell/ModuleFrame";
+import { useT } from "@/lib/i18n";
 
 export default function WebhooksLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="Platform · Web Hooks module" title="Webhooks" />
-      <NavTabs
-        tabs={[
-          { href: "/timeclock", label: "Time clock" },
-          { href: "/webhooks", label: "Webhooks" },
-          { href: "/tokens", label: "Tokens & access" },
-          { href: "/search", label: "Search" },
-        ]}
-      />
+    <ModuleFrame href="/webhooks" title={t("webhooks.title")}>
       {children}
-    </div>
+    </ModuleFrame>
   );
 }
