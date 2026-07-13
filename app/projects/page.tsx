@@ -11,6 +11,7 @@ import { DataTable, type Column } from "@/components/ui/DataTable";
 import { Input } from "@/components/ui/Input";
 import { Pagination } from "@/components/ui/Pagination";
 import { useDkQuery, usePrefetch } from "@/lib/hooks/useDk";
+import { useT } from "@/lib/i18n";
 import { formatDate } from "@/lib/format";
 import type { Project } from "@/lib/api/types/projects";
 import { NewProjectDialog } from "./_components/NewProjectDialog";
@@ -18,6 +19,7 @@ import { NewProjectDialog } from "./_components/NewProjectDialog";
 const COUNT = 50;
 
 export default function ProjectsPage() {
+  const t = useT();
   const router = useRouter();
   const prefetch = usePrefetch();
   const [page, setPage] = useState(1);
@@ -55,39 +57,39 @@ export default function ProjectsPage() {
   const columns: Column<Project>[] = [
     {
       key: "number",
-      header: "Number",
+      header: t("projects.field.number"),
       width: "130px",
       render: (p) => <span className="font-mono text-xs text-soot">{String(p.Number)}</span>,
     },
     {
       key: "name",
-      header: "Name",
+      header: t("projects.field.name"),
       render: (p) => <span className="font-medium text-ink">{p.Name || "–"}</span>,
     },
     {
       key: "description",
-      header: "Description",
+      header: t("projects.field.description"),
       render: (p) => (
         <span className="block max-w-md truncate text-fog">{p.Description || "–"}</span>
       ),
     },
     {
       key: "modified",
-      header: "Modified",
+      header: t("projects.field.modified"),
       width: "120px",
       render: (p) => <span className="tnum">{formatDate(p.Modified)}</span>,
     },
     {
       key: "status",
-      header: "Status",
+      header: t("projects.field.status"),
       width: "100px",
       render: (p) =>
         p.Closed == null ? (
           <span className="text-mist">–</span>
         ) : p.Closed ? (
-          <Badge tone="red">Closed</Badge>
+          <Badge tone="red">{t("projects.status.closed")}</Badge>
         ) : (
-          <Badge tone="green">Open</Badge>
+          <Badge tone="green">{t("projects.status.open")}</Badge>
         ),
     },
   ];

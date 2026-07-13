@@ -10,6 +10,7 @@ import { JsonView } from "@/components/ui/JsonView";
 import { useToast } from "@/components/ui/Toast";
 import { useDkMutation } from "@/lib/hooks/useDk";
 import { formatAmount, formatNumber, formatPercent } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 import type { CalcRequest, CalcResult } from "@/lib/api/types/overview";
 
 interface LineDraft {
@@ -29,6 +30,7 @@ const newLine = (): LineDraft => ({ id: nextLineId++, ItemCode: "", Quantity: "1
  */
 export default function CalculatorPage() {
   const toast = useToast();
+  const t = useT();
   const [customer, setCustomer] = useState("");
   const [salesPerson, setSalesPerson] = useState("");
   const [lines, setLines] = useState<LineDraft[]>([newLine()]);
@@ -65,8 +67,8 @@ export default function CalculatorPage() {
         },
         onError: (e) =>
           toast.error(
-            "Calculation failed",
-            e.status === 404 ? "Check that the item codes exist in this company." : e.message,
+            t("calc.failed"),
+            e.status === 404 ? t("calc.checkItems") : e.message,
           ),
       },
     );
@@ -79,28 +81,25 @@ export default function CalculatorPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow="Pricing engine" title="Calculator">
-        <p className="mt-2 max-w-xl text-sm text-fog">
-          Price a draft invoice through the real dkPlus rules engine — product prices, customer
-          agreements and discount rules — without creating anything.
-        </p>
+      <PageHeader eyebrow={t("calc.eyebrow")} title={t("calc.title")}>
+        <p className="mt-2 max-w-xl text-sm text-fog">{t("calc.body")}</p>
       </PageHeader>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
         <Card className="p-6">
           <CardTitle icon={<Calculator />} className="mb-5">
-            Draft lines
+            {t("calc.draftLines")}
           </CardTitle>
 
           <div className="mb-5 grid gap-4 sm:grid-cols-2">
-            <Field label="Customer number" hint="applies their price rules" required>
+            <Field label={t("calc.customer")} hint={t("calc.customerHint")} required>
               <Input
                 value={customer}
                 onChange={(e) => setCustomer(e.target.value)}
                 placeholder="e.g. 1710794709"
               />
             </Field>
-            <Field label="Salesperson" hint="optional">
+            <Field label={t("calc.salesperson")} hint={t("calc.optional")}>
               <Input
                 value={salesPerson}
                 onChange={(e) => setSalesPerson(e.target.value)}
@@ -111,9 +110,9 @@ export default function CalculatorPage() {
 
           <div className="space-y-2">
             <div className="grid grid-cols-[1fr_110px_120px_36px] gap-2 px-1 text-xs font-medium uppercase tracking-wide text-mist">
-              <span>Item code</span>
-              <span>Qty</span>
-              <span>Warehouse</span>
+              <span>{t("calc.itemCode")}</span>
+              <span>{t("calc.qty")}</span>
+              <span>{t("calc.warehouse")}</span>
               <span />
             </div>
             {lines.map((l) => (
@@ -133,11 +132,11 @@ export default function CalculatorPage() {
                 <Input
                   value={l.Warehouse}
                   onChange={(e) => patchLine(l.id, { Warehouse: e.target.value })}
-                  placeholder="optional"
+                  placeholder={t("calc.optional")}
                 />
                 <button
                   onClick={() => setLines((ls) => (ls.length > 1 ? ls.filter((x) => x.id !== l.id) : ls))}
-                  aria-label="Remove line"
+                  aria-label={t("calc.removeLine")}
                   className="grid cursor-pointer place-items-center rounded-xl text-mist transition-colors hover:bg-danger-soft hover:text-danger"
                 >
                   <Trash2 className="size-4" />
@@ -148,22 +147,22 @@ export default function CalculatorPage() {
 
           <div className="mt-4 flex items-center gap-2">
             <Button variant="secondary" size="sm" onClick={() => setLines((ls) => [...ls, newLine()])}>
-              <Plus className="size-4" /> Add line
+              <Plus className="size-4" /> {t("calc.addLine")}
             </Button>
             <Button className="ml-auto" onClick={run} disabled={!canCalc} loading={calc.isPending}>
-              <Equal className="size-4" /> Calculate
+              <Equal className="size-4" /> {t("calc.calculate")}
             </Button>
           </div>
           {(validLines.length === 0 || !customer.trim()) && (
             <p className="mt-3 text-right text-xs text-mist">
-              {!customer.trim() ? "Enter a customer number" : "Add at least one item code"} to calculate.
+              {!customer.trim() ? t("calc.needCustomer") : t("calc.needItem")} {t("calc.toCalculate")}
             </p>
           )}
         </Card>
 
         <div className="space-y-4">
           <Card className="glass-green p-6">
-            <p className="text-[13px] font-semibold text-ink">Result</p>
+            <p className="text-[13px] font-semibold text-ink">{t("calc.result")}</p>
             {result ? (
               <>
                 <p className="stat-numeral mt-3 text-[2.8rem] leading-none text-ink tnum">
@@ -171,30 +170,28 @@ export default function CalculatorPage() {
                 </p>
                 <div className="mt-4 space-y-1.5 text-sm text-ink/80">
                   <p className="flex justify-between">
-                    <span>Before tax</span>
+                    <span>{t("calc.beforeTax")}</span>
                     <span className="font-medium tnum">{formatAmount(result.TotalAmount, result.Currency ?? "ISK")}</span>
                   </p>
                   {vat != null && (
                     <p className="flex justify-between">
-                      <span>VAT</span>
+                      <span>{t("calc.vat")}</span>
                       <span className="font-medium tnum">{formatAmount(vat, result.Currency ?? "ISK")}</span>
                     </p>
                   )}
                   {elapsed != null && (
-                    <p className="pt-2 text-xs text-ink/60 tnum">priced by dkPlus in {elapsed} ms</p>
+                    <p className="pt-2 text-xs text-ink/60 tnum">{t("calc.pricedIn", { ms: elapsed })}</p>
                   )}
                 </div>
               </>
             ) : (
-              <p className="mt-3 text-sm text-ink/70">
-                Totals appear here — with the customer's own prices and discounts applied.
-              </p>
+              <p className="mt-3 text-sm text-ink/70">{t("calc.resultHint")}</p>
             )}
           </Card>
 
           {result?.Lines && result.Lines.length > 0 && (
             <Card className="p-5">
-              <p className="mb-3 text-[13px] font-medium text-fog">Line breakdown</p>
+              <p className="mb-3 text-[13px] font-medium text-fog">{t("calc.lineBreakdown")}</p>
               <div className="space-y-3">
                 {result.Lines.map((l, i) => (
                   <div key={i} className="border-b border-line pb-2 text-sm last:border-0">
@@ -208,7 +205,7 @@ export default function CalculatorPage() {
                     <p className="mt-0.5 flex justify-between text-xs text-fog tnum">
                       <span>
                         {formatNumber(l.Quantity)} × {formatAmount(l.UnitPriceWithTax)}
-                        {l.Discount ? ` − ${formatPercent(l.Discount, 0)} discount` : ""}
+                        {l.Discount ? ` − ${formatPercent(l.Discount, 0)} ${t("calc.discount")}` : ""}
                       </span>
                       {l.DiscountAmountWithTax ? <span>−{formatAmount(l.DiscountAmountWithTax)}</span> : null}
                     </p>
@@ -218,7 +215,7 @@ export default function CalculatorPage() {
             </Card>
           )}
 
-          {result && <JsonView data={result} label="Raw calculation payload" />}
+          {result && <JsonView data={result} label={t("calc.rawResult")} />}
         </div>
       </div>
     </div>

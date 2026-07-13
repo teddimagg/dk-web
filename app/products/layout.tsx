@@ -1,21 +1,22 @@
 "use client";
 
-import { NavTabs } from "@/components/ui/Tabs";
-import { PageHeader } from "@/components/ui/PageHeader";
+import { ModuleFrame } from "@/components/shell/ModuleFrame";
+import { useT } from "@/lib/i18n";
 
 export default function ProductsLayout({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
-    <div className="space-y-6">
-      <PageHeader eyebrow="Products module" title="Products" />
-      <NavTabs
-        tabs={[
-          { href: "/products", label: "Catalogue", exact: true },
-          { href: "/products/inventory", label: "Inventory" },
-          { href: "/products/transactions", label: "Transactions" },
-          { href: "/products/barcodes", label: "Barcode search" },
-        ]}
-      />
+    <ModuleFrame
+      href="/products"
+      title={t("products.title")}
+      tabs={[
+        { href: "/products", label: t("products.tabs.catalogue"), exact: true },
+        { href: "/products/inventory", label: t("products.tabs.inventory") },
+        { href: "/products/transactions", label: t("products.tabs.transactions") },
+        { href: "/products/barcodes", label: t("products.tabs.barcodes") },
+      ]}
+    >
       {children}
-    </div>
+    </ModuleFrame>
   );
 }

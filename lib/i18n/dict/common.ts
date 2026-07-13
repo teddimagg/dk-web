@@ -61,6 +61,13 @@ export const commonDict = {
     "ui.rawPayload": "Raw API payload",
     "ui.justNow": "just now",
 
+    // ── Pickers (autocomplete inputs) ─────────────────────────────
+    "picker.loading": "Searching…",
+    "picker.clear": "Clear value",
+    "picker.toggle": "Toggle suggestions",
+    "picker.noMatches": "No matches — free text is allowed",
+    "picker.typeToSearch": "Type at least 2 characters to search",
+
     // ── Period picker ─────────────────────────────────────────────
     "period.allHistory": "All history",
     "period.custom": "Custom",
@@ -84,6 +91,8 @@ export const commonDict = {
     "onboard.cardTitle": "Connect your first company",
     "onboard.cardSubtitle": "Takes about ten seconds.",
     "connect.tokenLabel": "dkPlus API token",
+    "connect.tokenHelp":
+      "A GUID-shaped key that grants API access to exactly one dkPlus company. Create one in dkPlus under Settings → API, or ask your administrator.",
     "connect.tokenRequired": "Paste a dkPlus API token first.",
     "connect.rejected": "That token was rejected by dkPlus — double-check it and try again.",
     "connect.unreachable": "Could not reach the dkPlus API.",
@@ -277,6 +286,13 @@ export const commonDict = {
     "ui.rawPayload": "Hrátt API-svar",
     "ui.justNow": "rétt í þessu",
 
+    // ── Fellivalmyndir (sjálfvirk útfylling) ──────────────────────
+    "picker.loading": "Leita…",
+    "picker.clear": "Hreinsa gildi",
+    "picker.toggle": "Sýna/fela tillögur",
+    "picker.noMatches": "Ekkert fannst — frjáls texti er leyfður",
+    "picker.typeToSearch": "Sláðu inn a.m.k. 2 stafi til að leita",
+
     // ── Tímabilsval ───────────────────────────────────────────────
     "period.allHistory": "Öll sagan",
     "period.custom": "Sérsniðið",
@@ -300,6 +316,8 @@ export const commonDict = {
     "onboard.cardTitle": "Tengdu fyrsta fyrirtækið",
     "onboard.cardSubtitle": "Tekur um tíu sekúndur.",
     "connect.tokenLabel": "dkPlus API-lykill",
+    "connect.tokenHelp":
+      "Lykill á GUID-formi sem veitir API-aðgang að nákvæmlega einu dkPlus fyrirtæki. Búðu hann til í dkPlus undir Stillingar → API eða fáðu hann hjá kerfisstjóra.",
     "connect.tokenRequired": "Límdu fyrst inn dkPlus API-lykil.",
     "connect.rejected": "dkPlus hafnaði lyklinum — athugaðu hann og reyndu aftur.",
     "connect.unreachable": "Náði ekki sambandi við dkPlus API.",

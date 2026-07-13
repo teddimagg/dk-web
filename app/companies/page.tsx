@@ -11,6 +11,7 @@ import { useToast } from "@/components/ui/Toast";
 import { ConnectCompanyForm } from "@/components/shell/ConnectCompanyForm";
 import { useCompanies, type Company } from "@/lib/stores/companies";
 import { timeAgo } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
 function maskToken(t: string) {
   return t.length > 12 ? `${t.slice(0, 6)}…${t.slice(-4)}` : "••••••";
@@ -20,14 +21,12 @@ export default function CompaniesPage() {
   const { companies, activeId, setActive, remove } = useCompanies();
   const [confirming, setConfirming] = useState<Company | null>(null);
   const toast = useToast();
+  const t = useT();
 
   return (
     <div className="space-y-8">
-      <PageHeader eyebrow="Token wallet" title="Companies">
-        <p className="mt-2 max-w-lg text-sm text-fog">
-          Each dkPlus token connects one company. The active company powers every page — switch
-          here or from the header at any time.
-        </p>
+      <PageHeader eyebrow={t("companies.eyebrow")} title={t("companies.title")}>
+        <p className="mt-2 max-w-lg text-sm text-fog">{t("companies.body")}</p>
       </PageHeader>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_420px]">

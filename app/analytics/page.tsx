@@ -13,6 +13,8 @@ import { useActiveCompany } from "@/lib/stores/companies";
 import { usePeriod, periodLabel } from "@/lib/stores/period";
 import { usePeriodInvoices } from "@/lib/hooks/usePeriodInvoices";
 import { formatAmount, formatCompact, formatDate, formatInt, formatPercent } from "@/lib/format";
+import { useT } from "@/lib/i18n";
+import { useLocale } from "@/lib/i18n/locale";
 import type { InvoiceSummary } from "@/lib/api/types/overview";
 
 const isSettled = (i: InvoiceSummary) =>
@@ -21,13 +23,14 @@ const isSettled = (i: InvoiceSummary) =>
 
 /** Vertical bar chart with month labels — pure SVG, reference aesthetic. */
 function MonthChart({ data }: { data: { label: string; value: number }[] }) {
+  const t = useT();
   const W = 720;
   const H = 240;
   const pad = { l: 8, r: 8, t: 24, b: 26 };
   const max = Math.max(...data.map((d) => d.value), 1);
   const bw = (W - pad.l - pad.r) / data.length;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Invoiced amount by month">
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={t("analytics.chartAria")}>
       {data.map((d, i) => {
         const h = Math.max(3, ((H - pad.t - pad.b) * d.value) / max);
         const x = pad.l + i * bw;
@@ -104,6 +107,8 @@ function RankBar({
 export default function AnalyticsPage() {
   const company = useActiveCompany();
   const { period, setPeriod } = usePeriod();
+  const t = useT();
+  const locale = useLocale((s) => s.locale);
 
   // Every invoice of the period, all pages (shared with Overview).
   const { invoices: inv, truncated, query } = usePeriodInvoices();
@@ -125,7 +130,9 @@ export default function AnalyticsPage() {
         minD = Math.min(minD, d.getTime());
         maxD = Math.max(maxD, d.getTime());
         const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
-        const label = d.toLocaleDateString("en-GB", { month: "short", year: "2-digit" }).replace(" ", " ’");
+        const label = d
+          .toLocaleDateString(locale === "is" ? "is-IS" : "en-GB", { month: "short", year: "2-digit" })
+          .replace(" ", " ’");
         const e = byMonth.get(key) ?? { label, value: 0, t: d.getTime() };
         e.value += Math.abs(i.TotalAmountWithTax);
         byMonth.set(key, e);
@@ -170,15 +177,15 @@ export default function AnalyticsPage() {
       openCount: inv.length - settledCount,
       span: { from: new Date(minD).toISOString(), to: new Date(maxD).toISOString() },
     };
-  }, [inv]);
+  }, [inv, locale]);
 
   const MODE_COLORS = ["var(--color-accent)", "var(--color-ink)", "var(--color-mist)", "var(--color-amber)", "var(--color-info)", "var(--color-line)"];
 
   return (
     <div className="space-y-6">
-      <PageHeader eyebrow={`Data based on ${company?.name ?? "…"}`} title="Analytics">
+      <PageHeader eyebrow={t("overview.eyebrow", { company: company?.name ?? "…" })} title={t("analytics.title")}>
         <p className="mt-2 text-sm text-fog">
-          Aggregated from invoices in {periodLabel(period)}
+          {t("analytics.subtitle", { period: periodLabel(period) })}
           {agg ? ` · ${formatDate(agg.span.from)} – ${formatDate(agg.span.to)}` : ""}.
         </p>
       </PageHeader>
@@ -187,9 +194,9 @@ export default function AnalyticsPage() {
         <PeriodPicker />
         {agg && (
           <p className="text-sm text-fog tnum">
-            {formatInt(inv?.length ?? 0)} invoices · {formatAmount(agg.total)} invoiced
+            {t("analytics.summary", { n: formatInt(inv?.length ?? 0), total: formatAmount(agg.total) })}
             {truncated && (
-              <span className="ml-2 text-[#9a6a10]">· truncated at 40.000 fetched — narrow the range</span>
+              <span className="ml-2 text-[#9a6a10]">{t("analytics.truncated")}</span>
             )}
           </p>
         )}
@@ -202,11 +209,11 @@ export default function AnalyticsPage() {
       ) : inv && inv.length === 0 ? (
         <Card>
           <EmptyState
-            title={`No invoices in ${periodLabel(period)}`}
-            body="This company has no invoice activity in the selected period — pick another year or browse everything."
+            title={t("analytics.emptyTitle", { period: periodLabel(period) })}
+            body={t("analytics.emptyBody")}
             action={
               <Button variant="secondary" size="sm" onClick={() => setPeriod({ mode: "all" })}>
-                Show all history
+                {t("overview.showAll")}
               </Button>
             }
           />
@@ -224,9 +231,9 @@ export default function AnalyticsPage() {
         <>
           <Card className="p-5">
             <CardTitle icon={<BarChart3 />} className="mb-4" action={
-              <span className="text-xs text-mist tnum">{formatCompact(agg.total)} ISK total</span>
+              <span className="text-xs text-mist tnum">{t("analytics.monthlyTotal", { total: formatCompact(agg.total) })}</span>
             }>
-              Invoiced Volume by Month
+              {t("analytics.monthly")}
             </CardTitle>
             <MonthChart data={agg.months} />
           </Card>
@@ -234,7 +241,7 @@ export default function AnalyticsPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="p-5">
               <CardTitle icon={<Crown />} className="mb-5">
-                Top Customers
+                {t("analytics.topCustomers")}
               </CardTitle>
               <div className="space-y-4">
                 {agg.topCustomers.map((c, i) => (
@@ -242,7 +249,7 @@ export default function AnalyticsPage() {
                     key={c.number}
                     rank={i + 1}
                     label={c.name}
-                    sub={`${formatInt(c.count)} invoices · ${c.number}`}
+                    sub={`${t("analytics.invoicesCount", { n: formatInt(c.count) })} · ${c.number}`}
                     value={c.total}
                     max={agg.topCustomers[0].total}
                   />
@@ -252,7 +259,7 @@ export default function AnalyticsPage() {
 
             <Card className="p-5">
               <CardTitle icon={<TrendingUp />} className="mb-5">
-                Salesperson Leaderboard
+                {t("analytics.leaderboard")}
               </CardTitle>
               <div className="space-y-4">
                 {agg.sellers.map((s, i) => (
@@ -260,7 +267,7 @@ export default function AnalyticsPage() {
                     key={s.number}
                     rank={i + 1}
                     label={s.number}
-                    sub={`${formatInt(s.count)} invoices`}
+                    sub={t("analytics.invoicesCount", { n: formatInt(s.count) })}
                     value={s.total}
                     max={agg.sellers[0].total}
                   />
@@ -270,7 +277,7 @@ export default function AnalyticsPage() {
 
             <Card className="p-5">
               <CardTitle icon={<CreditCard />} className="mb-5">
-                Payment Modes
+                {t("analytics.paymentModes")}
               </CardTitle>
               <SplitBar
                 className="h-3"
@@ -297,23 +304,23 @@ export default function AnalyticsPage() {
 
             <Card className="p-5">
               <CardTitle icon={<PieChart />} className="mb-5">
-                Settlement Status
+                {t("analytics.settlement")}
               </CardTitle>
               <div className="flex items-center justify-around py-2">
                 <div className="text-center">
                   <p className="stat-numeral text-4xl text-ink tnum">{formatInt(agg.settledCount)}</p>
-                  <p className="mt-1 text-sm text-fog">Settled</p>
+                  <p className="mt-1 text-sm text-fog">{t("analytics.settled")}</p>
                 </div>
                 <div className="text-center">
                   <p className="stat-numeral text-4xl text-ink tnum">
                     {formatPercent((agg.settledCount / (inv?.length ?? 1)) * 100, 1).replace("%", "")}
                     <sup className="text-base font-normal text-fog">%</sup>
                   </p>
-                  <p className="mt-1 text-sm text-fog">Settle rate</p>
+                  <p className="mt-1 text-sm text-fog">{t("analytics.settleRate")}</p>
                 </div>
                 <div className="text-center">
                   <p className="stat-numeral text-4xl text-ink tnum">{formatInt(agg.openCount)}</p>
-                  <p className="mt-1 text-sm text-fog">Open</p>
+                  <p className="mt-1 text-sm text-fog">{t("analytics.open")}</p>
                 </div>
               </div>
               <SplitBar

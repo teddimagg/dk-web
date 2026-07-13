@@ -66,7 +66,12 @@ export function ConnectCompanyForm({ onConnected }: { onConnected?: (name: strin
       }}
       className="space-y-4"
     >
-      <Field label={t("connect.tokenLabel")} error={error ?? undefined} required>
+      <Field
+        label={t("connect.tokenLabel")}
+        help={t("connect.tokenHelp")}
+        error={error ?? undefined}
+        required
+      >
         <div className="relative">
           <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-mist" />
           <Input
